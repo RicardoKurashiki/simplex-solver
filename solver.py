@@ -83,22 +83,32 @@ def iterate(func, baseVars, matrix, bases):
     bases[pLine] = bases[pLine]/pElement
     
     for i in range(len(baseVars)):
-        print(f"x{baseVars[i] + 1}      | {matrix[i]} | {currentBases[i]}")
+        print(f"x{baseVars[i] + 1}      | {matrix[i]} | {bases[i]}")
     
     return False
-    
-    
-func = [2,3,0,0] 
 
-baseVars = [2, 3]
+# Exemplo:
+# Maximizar L: 3*x1 + 4*x2
+#        s.a.    x1 +   x2 <= 450
+#              2*x1 +   x2 <= 600
+#                x1,    x2 >= 0
 
-matrix = [[1, 4, 1, 0],
-          [3, 3, 0, 1]]
+# [x1, x2, x3, x4, b]
+test_matrix = [[3,4,0,0,0],
+               [1,1,1,0,450],
+               [2,1,0,1,600]]
 
-currentBases = [8, 9]
+# Extraindo valores da função
+func = test_matrix[0][0 : (len(test_matrix[0]) - 1)]
+# Extraindo variáveis de base
+baseVars = [i for i in range((len(test_matrix) - 1), (len(test_matrix[0]) - 1), 1)]
+# Extraindo matriz
+matrix = [test_matrix[i][0 : (len(test_matrix[0]) - 1)] for i in range(1, len(test_matrix))]
+# Extraindo bases
+bases = [test_matrix[i][-1] for i in range(1, len(test_matrix))]
 
 for i in range(len(baseVars)):
-    print(f"x{baseVars[i] + 1}      | {matrix[i]} | {currentBases[i]}")
+    print(f"x{baseVars[i] + 1}      | {matrix[i]} | {bases[i]}")
 
-while (not iterate(func, baseVars, matrix, currentBases)):
+while (not iterate(func, baseVars, matrix, bases)):
     pass
