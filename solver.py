@@ -1,3 +1,5 @@
+import numpy as np
+
 # Print na interface gráfica de cada iteração
 def printIteration(baseVars, matrix, bases):
     printString = f""
@@ -53,7 +55,10 @@ def calcOmega(changeInfo, matrix, bases):
     pColumn = changeInfo[-1].index(max(changeInfo[-1]))
 
     for i in range(len(bases)):
-        omegaValues[i] = bases[i]/matrix[i][pColumn]
+        try:
+            omegaValues[i] = bases[i]/matrix[i][pColumn]
+        except:
+            omegaValues[i] = -1
     
     return omegaValues, pColumn
 
@@ -67,7 +72,7 @@ def calcZjBase(func, baseVars, base):
     return result
 
 # Realiza iteração alterando tudo
-def iterate(func, baseVars, matrix, bases, nIterations):
+def iterate(func, baseVars, matrix, bases, nIterations, bestSolution):
     # Matriz que armazena os valores de Zj (primeira linha) e Cj - Zj (segunda linha).
     changeInfo = calcContribution(func, matrix, baseVars)
     # Calcula a base do Zj.
@@ -75,14 +80,24 @@ def iterate(func, baseVars, matrix, bases, nIterations):
 
     printContributions(changeInfo, baseZj)
     
+    # Trata-se de um problema de maximização, então quanto maior, melhor.
+    if bestSolution[0] <= baseZj:
+        bestSolution[0] = baseZj
+        bestSolution[1] = baseVars
+        bestSolution[2] = bases
+    
     if (max(changeInfo[-1]) <= 0):
-        print(f"Melhor resultado = {round(baseZj, 4)}")
-        for i in range(len(baseVars)):
-            print(f"x{baseVars[i] + 1} = {round(bases[i], 4)}")
         return True
 
     # Calcula o Omega para cada variável de base e seleciona qual a coluna pivô.
     omegaInfo, pColumn = calcOmega(changeInfo, matrix, bases)
+    
+    # Verificação de sistema degenerado
+    for i in range(len(omegaInfo)):
+        if omegaInfo[i] < 0:
+            print(">> Sistema degenerado <<")
+            return True
+            
     # Verifica linha pivô
     pLine = omegaInfo.index(min(omegaInfo))    
     # Armazena elemento pivô
@@ -111,33 +126,51 @@ def iterate(func, baseVars, matrix, bases, nIterations):
     return False
 
 def solve(matrix):
+    # bestSolution[0] = Melhor base de Zj
+    # bestSolution[1] = [Melhor conjunto de variáveis de base]
+    # bestSolution[2] = [Melhor conjunto de valores das variáveis de base]
+    bestSolution = list()
     numberOfIterations = 1
+    
     # Extraindo valores da função
     func = test_matrix[0][0 : (len(test_matrix[0]) - 1)]
     # Extraindo variáveis de base
-    baseVars = [i for i in range((len(test_matrix) - 1), (len(test_matrix[0]) - 1), 1)]
+    baseVars = [i for i in range((len(test_matrix[0]) - len(test_matrix)), (len(test_matrix[0]) - 1), 1)]
     # Extraindo matriz
     matrix = [test_matrix[i][0 : (len(test_matrix[0]) - 1)] for i in range(1, len(test_matrix))]
     # Extraindo bases
     bases = [test_matrix[i][-1] for i in range(1, len(test_matrix))]
+    
+    # Populando inicialmente a estrutura bestSolutions
+    bestSolution.append(0)
+    bestSolution.append(baseVars)
+    bestSolution.append(bases)
 
+    # Iteração inicial
     print(f"{numberOfIterations}° Iteracao")
     printIteration(baseVars, matrix, bases)
         
     numberOfIterations += 1
-    while (not iterate(func, baseVars, matrix, bases, numberOfIterations)):
+    while (not iterate(func, baseVars, matrix, bases, numberOfIterations, bestSolution)):
         numberOfIterations += 1
-        
-
+    
+    print(f"Melhor resultado = {round(bestSolution[0], 4)}")
+    for i in range(len(bestSolution[1])):
+        print(f"x{bestSolution[1][i] + 1} = {round(bestSolution[2][i], 4)}")
+    
 # Exemplo:
 # Maximizar L: 6*x1 + 5*x2
 #        s.a.    x1 +   x2 <= 5
 #              3*x1 + 2*x2 <= 12
 #                x1,    x2 >= 0
 
-# [x1, x2, x3, x4, b]
-test_matrix = [[6,5,0,0,0],
-               [1,1,1,0,5],
-               [3,2,0,1,12]]
+# [x1, x2, x3, ..., b]
+test_matrix = [[3,2,0,0,0,0],
+               [2,1,1,0,0,100],
+               [1,1,0,1,0,80],
+               [1,0,0,0,1,40]]
+# test_matrix = [[6,5,0,0,0],
+#                [1,1,1,0,5],
+#                [3,2,0,1,12]]
 
 solve(test_matrix)
