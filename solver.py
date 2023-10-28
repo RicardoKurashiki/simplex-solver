@@ -87,16 +87,21 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution):
         bestSolution[2] = bases
     
     if (max(changeInfo[-1]) <= 0):
+        # Verificação de sistema degenerado
+        if 0 in bestSolution[2]:
+            print(">> Sistema Degenerado <<")
         return True
 
     # Calcula o Omega para cada variável de base e seleciona qual a coluna pivô.
     omegaInfo, pColumn = calcOmega(changeInfo, matrix, bases)
     
-    # Verificação de sistema degenerado
-    for i in range(len(omegaInfo)):
-        if omegaInfo[i] < 0:
-            print(">> Sistema degenerado <<")
-            return True
+    # Verificação de sistema sem fronteira
+    # for i in range(len(omegaInfo)):
+    #     if omegaInfo[i] >= 0:
+    #         continue
+    #     else:
+    #         print(">> Sistema sem fronteira <<")
+    #         return True
             
     # Verifica linha pivô
     pLine = omegaInfo.index(min(omegaInfo))    
@@ -165,12 +170,12 @@ def solve(matrix):
 #                x1,    x2 >= 0
 
 # [x1, x2, x3, ..., b]
-test_matrix = [[3,2,0,0,0,0],
-               [2,1,1,0,0,100],
-               [1,1,0,1,0,80],
-               [1,0,0,0,1,40]]
-# test_matrix = [[6,5,0,0,0],
-#                [1,1,1,0,5],
-#                [3,2,0,1,12]]
+# test_matrix = [[3,2,0,0,0,0],
+#                [2,1,1,0,0,100],
+#                [1,1,0,1,0,80],
+#                [1,0,0,0,1,40]]
+test_matrix = [[4,3,0,0,0],
+               [2,3,1,0,8],
+               [3,2,0,1,12]]
 
 solve(test_matrix)
