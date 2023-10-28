@@ -1,3 +1,29 @@
+# Print na interface gráfica de cada iteração
+def printIteration(baseVars, matrix, bases):
+    printString = f""
+    
+    for i in range(len(baseVars)):
+        # print(f"x{baseVars[i] + 1}      | {matrix[i]} | {bases[i]}")
+        printString += f"x{baseVars[i] + 1} {'|' : >6} "
+        for j in range(len(matrix[i])):
+            printString += f"{round(matrix[i][j], 4) : <10} "
+        printString += f"| {round(bases[i],4)}\n"
+
+    print(printString[:-1])
+
+# Print na interface gráfica de cada contribuição
+def printContributions(changeInfo, baseZj):
+    printString = "--------------------------------------------------------------\n"
+    printString += "Zj      | "
+    for i in range(len(changeInfo[0])):
+        printString += f"{round(changeInfo[0][i], 4) : <10} "
+    printString += f"| {round(baseZj, 4)}\n"
+    printString += "Cj - Zj | "
+    for i in range(len(changeInfo[0])):
+        printString += f"{round(changeInfo[1][i], 4) : <10} "
+    printString += "\n--------------------------------------------------------------"
+    print(printString)
+    
 # Calcula o Zj e o Cj - Zj, retornando uma matriz com os valores de ambos.
 def calcContribution(function, matrix, baseVars):
     result = list()
@@ -41,21 +67,18 @@ def calcZjBase(func, baseVars, base):
     return result
 
 # Realiza iteração alterando tudo
-def iterate(func, baseVars, matrix, bases):
+def iterate(func, baseVars, matrix, bases, nIterations):
     # Matriz que armazena os valores de Zj (primeira linha) e Cj - Zj (segunda linha).
     changeInfo = calcContribution(func, matrix, baseVars)
     # Calcula a base do Zj.
     baseZj = calcZjBase(func, baseVars, bases)
 
-    print("------------------------------------------------------")
-    print(f"Zj      | {changeInfo[0]} | {baseZj}")
-    print(f"Cj - Zj | {changeInfo[1]}")
-    print("------------------------------------------------------")
+    printContributions(changeInfo, baseZj)
     
     if (max(changeInfo[-1]) <= 0):
-        print(f"Melhor resultado = {baseZj}")
+        print(f"Melhor resultado = {round(baseZj, 4)}")
         for i in range(len(baseVars)):
-            print(f"x{baseVars[i] + 1} = {bases[i]}")
+            print(f"x{baseVars[i] + 1} = {round(bases[i], 4)}")
         return True
 
     # Calcula o Omega para cada variável de base e seleciona qual a coluna pivô.
@@ -82,33 +105,39 @@ def iterate(func, baseVars, matrix, bases):
         matrix[pLine][i] = matrix[pLine][i]/pElement
     bases[pLine] = bases[pLine]/pElement
     
-    for i in range(len(baseVars)):
-        print(f"x{baseVars[i] + 1}      | {matrix[i]} | {bases[i]}")
+    print(f"{nIterations}° Iteracao")
+    printIteration(baseVars, matrix, bases)
     
     return False
 
+def solve(matrix):
+    numberOfIterations = 1
+    # Extraindo valores da função
+    func = test_matrix[0][0 : (len(test_matrix[0]) - 1)]
+    # Extraindo variáveis de base
+    baseVars = [i for i in range((len(test_matrix) - 1), (len(test_matrix[0]) - 1), 1)]
+    # Extraindo matriz
+    matrix = [test_matrix[i][0 : (len(test_matrix[0]) - 1)] for i in range(1, len(test_matrix))]
+    # Extraindo bases
+    bases = [test_matrix[i][-1] for i in range(1, len(test_matrix))]
+
+    print(f"{numberOfIterations}° Iteracao")
+    printIteration(baseVars, matrix, bases)
+        
+    numberOfIterations += 1
+    while (not iterate(func, baseVars, matrix, bases, numberOfIterations)):
+        numberOfIterations += 1
+        
+
 # Exemplo:
-# Maximizar L: 3*x1 + 4*x2
-#        s.a.    x1 +   x2 <= 450
-#              2*x1 +   x2 <= 600
+# Maximizar L: 6*x1 + 5*x2
+#        s.a.    x1 +   x2 <= 5
+#              3*x1 + 2*x2 <= 12
 #                x1,    x2 >= 0
 
 # [x1, x2, x3, x4, b]
-test_matrix = [[3,4,0,0,0],
-               [1,1,1,0,450],
-               [2,1,0,1,600]]
+test_matrix = [[6,5,0,0,0],
+               [1,1,1,0,5],
+               [3,2,0,1,12]]
 
-# Extraindo valores da função
-func = test_matrix[0][0 : (len(test_matrix[0]) - 1)]
-# Extraindo variáveis de base
-baseVars = [i for i in range((len(test_matrix) - 1), (len(test_matrix[0]) - 1), 1)]
-# Extraindo matriz
-matrix = [test_matrix[i][0 : (len(test_matrix[0]) - 1)] for i in range(1, len(test_matrix))]
-# Extraindo bases
-bases = [test_matrix[i][-1] for i in range(1, len(test_matrix))]
-
-for i in range(len(baseVars)):
-    print(f"x{baseVars[i] + 1}      | {matrix[i]} | {bases[i]}")
-
-while (not iterate(func, baseVars, matrix, bases)):
-    pass
+solve(test_matrix)
