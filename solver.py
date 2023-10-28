@@ -1,5 +1,3 @@
-import numpy as np
-
 # Print na interface gráfica de cada iteração
 def printIteration(baseVars, matrix, bases):
     printString = f""
@@ -96,15 +94,18 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution):
     omegaInfo, pColumn = calcOmega(changeInfo, matrix, bases)
     
     # Verificação de sistema sem fronteira
-    # for i in range(len(omegaInfo)):
-    #     if omegaInfo[i] >= 0:
-    #         continue
-    #     else:
-    #         print(">> Sistema sem fronteira <<")
-    #         return True
+    for i in range(len(omegaInfo)):
+        viableOmega = False
+        if omegaInfo[i] >= 0:
+            viableOmega = True
+            break
+        
+    if not viableOmega:
+        print(">> Sistema sem fronteira <<")
+        return True
             
-    # Verifica linha pivô
-    pLine = omegaInfo.index(min(omegaInfo))    
+    # Verifica linha pivô - Menor valor positivo ou igual a zero.
+    pLine = omegaInfo.index(min([i for i in omegaInfo if i >= 0]))  
     # Armazena elemento pivô
     pElement = matrix[pLine][pColumn]
     
@@ -170,12 +171,24 @@ def solve(matrix):
 #                x1,    x2 >= 0
 
 # [x1, x2, x3, ..., b]
+test_matrix = [[6,5,0,0,0],
+               [1,1,1,0,5],
+               [3,2,0,1,12]]
+
+# Exemplo com matriz maior
 # test_matrix = [[3,2,0,0,0,0],
 #                [2,1,1,0,0,100],
 #                [1,1,0,1,0,80],
 #                [1,0,0,0,1,40]]
-test_matrix = [[4,3,0,0,0],
-               [2,3,1,0,8],
-               [3,2,0,1,12]]
+
+# Exemplo de sistema sem fronteira
+# test_matrix = [[4,3,0,0,0],
+#                [1,-6,1,0,5],
+#                [3,0,0,1,11]]
+
+# Exemplo de sistema degenerado
+# test_matrix = [[4,3,0,0,0],
+#                [2,3,1,0,8],
+#                [3,2,0,1,12]]
 
 solve(test_matrix)
