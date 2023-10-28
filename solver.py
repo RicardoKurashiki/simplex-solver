@@ -1,5 +1,5 @@
 # Calcula o Zj e o Cj - Zj, retornando uma matriz com os valores de ambos.
-def calcAsParada(function, matrix, chosenVars):
+def calcContribution(function, matrix, baseVars):
     result = list()
     numberOfElements = len(matrix)
     numberOfVars = len(function)
@@ -9,7 +9,7 @@ def calcAsParada(function, matrix, chosenVars):
     
     for i in range(numberOfVars):
         for j in range(numberOfElements):
-            zj[i] += function[chosenVars[j]] * matrix[j][i]
+            zj[i] += function[baseVars[j]] * matrix[j][i]
     
     for i in range(numberOfVars):
         cjmzj[i] = function[i] - zj[i]
@@ -19,84 +19,86 @@ def calcAsParada(function, matrix, chosenVars):
     
     return result
 
-# Calcula Omega para cada linha
+# Calcula Omega para cada variável de base.
 def calcOmega(changeInfo, matrix, bases):
     omegaValues = [0] * len(bases) 
     
-    # Selecionando maior coluna de Cj - Zj
-    selectedCol = changeInfo[-1].index(max(changeInfo[-1]))
+    # Selecionando coluna pivô.
+    pColumn = changeInfo[-1].index(max(changeInfo[-1]))
 
     for i in range(len(bases)):
-        try:
-            omegaValues[i] = bases[i]/matrix[i][selectedCol]
-        except:
-            omegaValues[i] = 0
+        omegaValues[i] = bases[i]/matrix[i][pColumn]
     
-    return omegaValues, selectedCol
+    return omegaValues, pColumn
 
 # Calcula base do Zj
-def calcZjBase(func, chosenVars, base):
+def calcZjBase(func, baseVars, base):
     result = 0
     
     for i in range(len(base)):
-        result += func[chosenVars[i]] * base[i]
+        result += func[baseVars[i]] * base[i]
     
     return result
 
 # Realiza iteração alterando tudo
-def iterate(func, chosenVars, matrix, bases):
-    changeInfo = calcAsParada(func, matrix, chosenVars)
-    
+def iterate(func, baseVars, matrix, bases):
+    # Matriz que armazena os valores de Zj (primeira linha) e Cj - Zj (segunda linha).
+    changeInfo = calcContribution(func, matrix, baseVars)
+    # Calcula a base do Zj.
+    baseZj = calcZjBase(func, baseVars, bases)
+
     print("------------------------------------------------------")
-    print(f"Zj      | {changeInfo[0]} | {calcZjBase(func, chosenVars, bases)}")
+    print(f"Zj      | {changeInfo[0]} | {baseZj}")
     print(f"Cj - Zj | {changeInfo[1]}")
     print("------------------------------------------------------")
     
     if (max(changeInfo[-1]) <= 0):
-        print(f"Melhor resultado = {calcZjBase(func, chosenVars, bases)}")
-        for i in range(len(chosenVars)):
-            print(f"x{chosenVars[i] + 1} = {bases[i]}")
+        print(f"Melhor resultado = {baseZj}")
+        for i in range(len(baseVars)):
+            print(f"x{baseVars[i] + 1} = {bases[i]}")
         return True
+
+    # Calcula o Omega para cada variável de base e seleciona qual a coluna pivô.
+    omegaInfo, pColumn = calcOmega(changeInfo, matrix, bases)
+    # Verifica linha pivô
+    pLine = omegaInfo.index(min(omegaInfo))    
+    # Armazena elemento pivô
+    pElement = matrix[pLine][pColumn]
     
-    omegaInfo, colunaP = calcOmega(changeInfo, matrix, bases)
-    linhaP = omegaInfo.index(min(omegaInfo))    
-    elementoP = matrix[linhaP][colunaP]
-    chosenVars[linhaP] = colunaP
+    # Realiza troca das variáveis de base.
+    baseVars[pLine] = pColumn
     
-    
+    # Realiza as alterações na matriz para seguir troca de variáveis de base.
     for i in range(len(matrix)):
-        if i != linhaP:
-            try:
-                coef = matrix[i][colunaP]/elementoP
-            except:
-                coef = 0
+        if i != pLine:
+            coef = matrix[i][pColumn]/pElement
                 
             for j in range(len(matrix[i])):
-                matrix[i][j] = matrix[i][j] - (coef * matrix[linhaP][j])
+                matrix[i][j] = matrix[i][j] - (coef * matrix[pLine][j])
                 
-            bases[i] = bases[i] - (coef * bases[linhaP])
+            bases[i] = bases[i] - (coef * bases[pLine])
                 
-    for i in range(len(matrix[linhaP])): 
-        matrix[linhaP][i] = matrix[linhaP][i]/elementoP
-    bases[linhaP] = bases[linhaP]/elementoP
+    for i in range(len(matrix[pLine])): 
+        matrix[pLine][i] = matrix[pLine][i]/pElement
+    bases[pLine] = bases[pLine]/pElement
     
-    for i in range(len(chosenVars)):
-        print(f"x{chosenVars[i] + 1}      | {matrix[i]} | {currentBases[i]}")
+    for i in range(len(baseVars)):
+        print(f"x{baseVars[i] + 1}      | {matrix[i]} | {currentBases[i]}")
     
     return False
     
     
 func = [2,3,0,0] 
 
-chosenVars = [2, 3]
+baseVars = [2, 3]
 
 matrix = [[1, 4, 1, 0],
           [3, 3, 0, 1]]
 
 currentBases = [8, 9]
 
-for i in range(len(chosenVars)):
-    print(f"x{chosenVars[i] + 1}      | {matrix[i]} | {currentBases[i]}")
+for i in range(len(baseVars)):
+    print(f"x{baseVars[i] + 1}      | {matrix[i]} | {currentBases[i]}")
 
-while(not iterate(func, chosenVars, matrix, currentBases)):
+while (not iterate(func, baseVars, matrix, currentBases)):
     pass
