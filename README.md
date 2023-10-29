@@ -17,8 +17,10 @@ O trabalho consiste na aplicação do método Simplex para resolver problemas de
 
 O repositório está organizado da seguinte forma:
 
-- **`src/cli.py`**: Este arquivo contém toda a parte de interface do usuário.
+- **`cli.py`**: Este arquivo contém toda a parte de interface do usuário.
 - **`solver.py`**: É onde foi feita a lógica para a solução dos problemas Simplex.
+- **`enums.py`**: Arquivo responsável por armazenar todos os enumeradores utilizados na solução.
+- **`requirements.txt`**: Lista dos pacotes que são necessários para este programa funcionar.
 - **`README.md`**: Este arquivo que fornece uma visão geral do trabalho.
 
 ---
