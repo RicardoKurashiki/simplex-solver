@@ -1,11 +1,28 @@
 from enum import Enum
 
 # TODO: Ver se consegue pensar em outra lógica para lidar com os Ms, senão, usa isso mesmo.
+# Funciona, mas não é muito elegante.
 class BigNumber(Enum):
     M = 1000000000
 
+# Constrói e printa cabeçalho.
+def buildHeader(func, artificials):
+    printString = f"{'|' : >9} "
+    
+    for i in range(len(func)):
+        tempString = ""
+        if i in artificials:
+            tempString = f"a{artificials.index(i) + 1} "
+        else:
+            tempString = f"x{i+1} "
+        printString += f"{tempString : <11}"
+        
+    printString += f"| {'b' : <11}"
+    print(printString)
+    
+
 # Construção de string com M para mostrar iteração
-def buildMString(value):
+def buildContribStr(value):
     if abs(value / BigNumber.M.value) >= 0.1:
         tempString = f"{round(value / BigNumber.M.value,1)}M"
     else:
@@ -14,11 +31,10 @@ def buildMString(value):
     return tempString
 
 # Print na interface gráfica de cada iteração
+# TODO: Diferenciar as variáveis artificiais (a...) das variáveis de folga (x...).
 def printIteration(baseVars, matrix, bases):
-    printString = f""
-    
+    printString = ""
     for i in range(len(baseVars)):
-        # print(f"x{baseVars[i] + 1}      | {matrix[i]} | {bases[i]}")
         printString += f"x{baseVars[i] + 1} {'|' : >6} "
         for j in range(len(matrix[i])):
             printString += f"{round(matrix[i][j], 4) : <10} "
@@ -28,28 +44,16 @@ def printIteration(baseVars, matrix, bases):
 
 # Print na interface gráfica de cada contribuição
 def printContributions(changeInfo, baseZj, artificials):
-    if (len(artificials) <= 0):
-        printString = "--------------------------------------------------------------\n"
-        printString += "Zj      | "
-        for i in range(len(changeInfo[0])):
-            printString += f"{round(changeInfo[0][i], 4) : <10} "
-        printString += f"| {round(baseZj, 4)}\n"
-        printString += "Cj - Zj | "
-        for i in range(len(changeInfo[0])):
-            printString += f"{round(changeInfo[1][i], 4) : <10} "
-        printString += "\n--------------------------------------------------------------"
-        print(printString)
-    else:
-        printString = "--------------------------------------------------------------\n"
-        printString += "Zj      | "
-        for i in range(len(changeInfo[0])):
-            printString += f"{buildMString(changeInfo[0][i]) : <10} "
-        printString += f"| {buildMString(baseZj)}\n"
-        printString += "Cj - Zj | "
-        for i in range(len(changeInfo[1])):
-            printString += f"{buildMString(changeInfo[1][i]) : <10} "
-        printString += "\n--------------------------------------------------------------"
-        print(printString)
+    printString = "--------------------------------------------------------------\n"
+    printString += f"Zj {'|' : >6} "
+    for i in range(len(changeInfo[0])):
+        printString += f"{buildContribStr(changeInfo[0][i]) : <10} "
+    printString += f"| {buildContribStr(baseZj)}\n"
+    printString += "Cj - Zj | "
+    for i in range(len(changeInfo[1])):
+        printString += f"{buildContribStr(changeInfo[1][i]) : <10} "
+    printString += "\n--------------------------------------------------------------"
+    print(printString)
         
 # Calcula o Zj e o Cj - Zj, retornando uma matriz com os valores de ambos.
 def calcContribution(function, matrix, baseVars):
@@ -80,6 +84,7 @@ def calcOmega(changeInfo, matrix, bases):
     pColumn = changeInfo[-1].index(max(changeInfo[-1]))
 
     for i in range(len(bases)):
+        # Verificação se Omega é viável.
         try:
             omegaValues[i] = bases[i]/matrix[i][pColumn]
         except:
@@ -113,9 +118,12 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificial
     
     if (max(changeInfo[-1]) <= 0):
         # Verificação de sistema degenerado
+        # Sistema degenerado vai possuir um 0 em umas das variáveis de base da solução.
         if 0 in bestSolution[2]:
             print(">> Sistema Degenerado <<")
+            
         # Verificação de sistema inviável
+        # Sistema inviável vai possuir uma variável artificial nas variáveis de base.
         for i in range(len(baseVars)):
             for j in range(len(artificials)):
                 if baseVars[i] == artificials[j]:
@@ -127,6 +135,7 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificial
     omegaInfo, pColumn = calcOmega(changeInfo, matrix, bases)
     
     # Verificação de sistema sem fronteira
+    # Um sistema sem fronteira é aquele onde todos os omegas são inválidos (Omega < 0 || Omega -> Inf)
     for i in range(len(omegaInfo)):
         viableOmega = False
         if omegaInfo[i] >= 0:
@@ -148,6 +157,8 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificial
     # Realiza as alterações na matriz para seguir troca de variáveis de base.
     for i in range(len(matrix)):
         if i != pLine:
+            # Coeficiente de multiplicação da linha pivô -> Ly = Lx - coef*Lpivo
+            # Coeficiente -> Elemento da coluna pivô, mas da linha atual / Elemento pivô
             coef = matrix[i][pColumn]/pElement
                 
             for j in range(len(matrix[i])):
@@ -155,6 +166,7 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificial
                 
             bases[i] = bases[i] - (coef * bases[pLine])
                 
+    # Lpivo = Lpivo/Epivo
     for i in range(len(matrix[pLine])): 
         matrix[pLine][i] = matrix[pLine][i]/pElement
     bases[pLine] = bases[pLine]/pElement
@@ -184,7 +196,6 @@ def solve(input_matrix):
     # Extraindo variaveis artificiais, se houver
     # TODO: Esse método de estimativa de qtd de variáveis artificiais está estranho, rever isso aqui.
     numArt = len(func) - (2 * (len(matrix)))
-    print(numArt)
     if numArt != 0:
         artificials = [i for i in range((len(input_matrix[0]) - (numArt + 1)), (len(input_matrix[0]) - 1), 1)]
         # Alterando coeficientes da função para valores tendendo ao infinito
@@ -197,6 +208,9 @@ def solve(input_matrix):
     bestSolution.append(bases)
 
     # Iteração inicial
+    # TODO: Adicionar aqui todas as variáveis, como se fosse um cabeçalho.
+    buildHeader(func, artificials)
+    print("--------------------------------------------------------------")
     print(f"{numberOfIterations}° Iteracao")
     printIteration(baseVars, matrix, bases)
         
@@ -236,14 +250,14 @@ def solve(input_matrix):
 #                [3,2,0,1,12]]
 
 # Exemplo de sistema inviável
-input_matrix = [[4,3,0,0,-1,0],
-               [1,4,1,0,0,3],
-               [3,1,0,-1,1,12]]
+# input_matrix = [[4,3,0,0,-1,0],
+#                 [1,4,1,0,0,3],
+#                 [3,1,0,-1,1,12]]
 
 # Exemplo de minimização
-# input_matrix = [[-3,-4,0,0,-1,-1,0],
-#                [2,3,-1,0,1,0,8],
-#                [5,2,0,-1,0,1,12]]
+input_matrix = [[-3,-4,0,0,-1,-1,0],
+               [2,3,-1,0,1,0,8],
+               [5,2,0,-1,0,1,12]]
 
 
 solve(input_matrix)
