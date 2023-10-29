@@ -53,8 +53,6 @@ def buildIterationStructure(baseVars, matrix, bases, changeInfo, baseZj):
     # Removendo calculo de base para o Cj - Zj
     resultMatrix[-1][-1] = 0.0
     resultData["matrix"] = resultMatrix
-    print(resultMatrix)
-    print("")
     
     return resultData
         
@@ -227,7 +225,6 @@ def solve(input_matrix, nArtificials = 0, isMin = False):
     
     # Parte experimental do JSON
     json_data = json.dumps(solverInfo)
-    print(json_data)
     return json_data
 
 # Exemplo:
