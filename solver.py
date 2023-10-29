@@ -43,8 +43,6 @@ def printIteration(baseVars, matrix, bases):
     print(printString[:-1])
 
 # Print na interface gráfica de cada contribuição
-
-
 def printContributions(changeInfo, baseZj, artificials):
     printString = "--------------------------------------------------------------\n"
     printString += f"Zj {'|' : >6} "
@@ -58,8 +56,6 @@ def printContributions(changeInfo, baseZj, artificials):
     print(printString)
         
 # Calcula o Zj e o Cj - Zj, retornando uma matriz com os valores de ambos.
-
-
 def calcContribution(function, matrix, baseVars):
     result = list()
     numberOfElements = len(matrix)
@@ -81,8 +77,6 @@ def calcContribution(function, matrix, baseVars):
     return result
 
 # Calcula Omega para cada variável de base.
-
-
 def calcOmega(changeInfo, matrix, bases):
     omegaValues = [0] * len(bases)
 
@@ -110,8 +104,6 @@ def calcZjBase(func, baseVars, base):
     return result
 
 # Realiza iteração alterando tudo
-
-
 def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificials):
     # Matriz que armazena os valores de Zj (primeira linha) e Cj - Zj (segunda linha).
     changeInfo = calcContribution(func, matrix, baseVars)
@@ -269,9 +261,9 @@ def solve(input_matrix):
 #                 [3,1,0,-1,1,12]]
 
 # Exemplo de minimização
-input_matrix = [[-3,-4,0,0,-1,-1,0],
-               [2,3,-1,0,1,0,8],
-               [5,2,0,-1,0,1,12]]
+# input_matrix = [[-3,-4,0,0,-1,-1,0],
+#                [2,3,-1,0,1,0,8],
+#                [5,2,0,-1,0,1,12]]
 
 
 # solve(input_matrix)
