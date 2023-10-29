@@ -1,4 +1,5 @@
 import curses
+import json
 from enums import *
 from solver import *
 
@@ -61,7 +62,7 @@ def get_inequation(stdscr):
                 stdscr.addstr(f"  {value}\n")
         key = stdscr.getch()
 
-        if key in [10, 13]:
+        if key == 10:
             return valid_inequations[current]
         elif key == curses.KEY_UP and current > 0:
             current -= 1
@@ -124,7 +125,7 @@ def get_simplex_data(stdscr, num_variables, num_constraints):
         elif key == ord("e") or key == ord("E"):
             value = put_value(stdscr)
             variables[cursor_y] = value
-        elif key in [10, 13]:
+        elif key == 10:
             break
 
     # Get Constraints
@@ -158,7 +159,7 @@ def get_simplex_data(stdscr, num_variables, num_constraints):
             else:
                 value = put_value(stdscr)
             constraints[cursor_x][cursor_y] = value
-        elif key in [10, 13]:
+        elif key == 10:
             break
 
     return variables, constraints
@@ -218,6 +219,55 @@ def showTable(stdscr, variables: list, constraints: list):
     stdscr.getch()
 
 
+def showResult(stdscr, result: dict):
+    def header(matrix: list):
+        printStr = f'{"|" : >9} '
+        func = matrix[0][0: (len(matrix[0]) - 1)]
+        for i in range(len(func)):
+            printStr += f"{f'x{i+1} ' : <11}"
+        printStr += f"| {'b' : <11}"
+        stdscr.addstr(printStr)
+
+    def body(matrix: list):
+        baseVars = [i for i in range(
+            (len(matrix[0]) - len(matrix)), (len(matrix[0]) - 1), 1)]
+        values = [matrix[i][0: (len(matrix[0]) - 1)]
+                  for i in range(1, len(matrix))]
+        bases = [matrix[i][-1] for i in range(1, len(matrix))]
+        stdscr.addstr(
+            '\n--------------------------------------------------------------\n')
+        printStr = ""
+        for i in range(len(baseVars)):
+            printStr += f"x{baseVars[i] + 1} {'|' : >6} "
+            for j in range(len(values[i])):
+                printStr += f"{round(values[i][j], 4) : <10} "
+            printStr += f"| {round(bases[i], 4)}\n"
+        stdscr.addstr(printStr)
+
+    solver_result = result['solver']
+    best_result = result['bestResult']
+    iterations = result['iterations']
+    for i, iteration in enumerate(iterations):
+        stdscr.clear()
+        matrix = iteration['matrix']
+        stdscr.addstr(f'[>] {i+1}º iteração\n\n')
+        header(matrix)
+        body(matrix)
+        stdscr.addstr('\n[ENTER] Para a próxima etapa\n\n')
+        stdscr.refresh()
+        stdscr.getch()
+
+    stdscr.clear()
+    stdscr.addstr('[!] Solução ótima\n\n')
+    stdscr.addstr(f'Z = {best_result[0]}\n')
+    for i, value in enumerate(best_result[1]):
+        stdscr.addstr(
+            f"x{best_result[1][i] + 1} = {round(best_result[2][i], 4)}\n")
+    stdscr.addstr('\n[ENTER] Para finalizar')
+    stdscr.refresh()
+    stdscr.getch()
+
+
 def main(stdscr):
     # Mostra nomes dos alunos
     init(stdscr)
@@ -235,7 +285,9 @@ def main(stdscr):
     variables, constraints, solver_input = remove_inequation(
         variables, constraints)
 
-    solve(solver_input)
+    result = json.loads(solve(solver_input))
+
+    showResult(stdscr, result)
 
 
 if __name__ == "__main__":
