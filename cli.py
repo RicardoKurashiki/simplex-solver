@@ -182,6 +182,7 @@ def removeInequalities(variables: list, constraints: list):
                     value += [0.0]
         elif (constraints_ineq[i] == ">="):
             constraints_values[i] = [-v for v in value]
+            constraints_b[i] = -constraints_b[i]
             for j, value in enumerate(constraints_values):
                 if i == j:
                     value += [1.0]
