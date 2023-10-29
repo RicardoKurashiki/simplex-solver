@@ -164,7 +164,7 @@ def get_simplex_data(stdscr, num_variables, num_constraints):
     return variables, constraints
 
 
-def removeInequalities(variables: list, constraints: list):
+def remove_inequation(variables: list, constraints: list):
     num_vars = len(variables)
     num_constraints = len(constraints)
 
@@ -194,7 +194,8 @@ def removeInequalities(variables: list, constraints: list):
         row = constraints_values[i] + [constraints_b[i]]
         new_constraints.append(row)
 
-    variables += [0.0] * num_constraints
+    row_len = len(new_constraints[0])
+    variables += [0.0] * (row_len - num_vars)
     result = [variables] + new_constraints
 
     return variables, new_constraints, result
@@ -231,7 +232,7 @@ def main(stdscr):
 
     showTable(stdscr, variables, constraints)
 
-    variables, constraints, solver_input = removeInequalities(
+    variables, constraints, solver_input = remove_inequation(
         variables, constraints)
 
     solve(solver_input)
