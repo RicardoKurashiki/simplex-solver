@@ -1,3 +1,20 @@
+from enum import Enum
+
+class BigNumber(Enum):
+    M = 1000000000
+    
+def buildMString(value):
+    # print(value)
+    if abs(value / BigNumber.M.value) >= 0.1:
+        # if (value < 0):
+        #     tempString = f"{(value + 0) // BigNumber.M.value}M"
+        # else:
+        tempString = f"{round(value / BigNumber.M.value,1)}M"
+    else:
+        tempString = f"{round(value, 4)}"
+        
+    return tempString
+
 # Print na interface gráfica de cada iteração
 def printIteration(baseVars, matrix, bases):
     printString = f""
@@ -12,18 +29,30 @@ def printIteration(baseVars, matrix, bases):
     print(printString[:-1])
 
 # Print na interface gráfica de cada contribuição
-def printContributions(changeInfo, baseZj):
-    printString = "--------------------------------------------------------------\n"
-    printString += "Zj      | "
-    for i in range(len(changeInfo[0])):
-        printString += f"{round(changeInfo[0][i], 4) : <10} "
-    printString += f"| {round(baseZj, 4)}\n"
-    printString += "Cj - Zj | "
-    for i in range(len(changeInfo[0])):
-        printString += f"{round(changeInfo[1][i], 4) : <10} "
-    printString += "\n--------------------------------------------------------------"
-    print(printString)
-    
+def printContributions(changeInfo, baseZj, artificials):
+    if (len(artificials) <= 0):
+        printString = "--------------------------------------------------------------\n"
+        printString += "Zj      | "
+        for i in range(len(changeInfo[0])):
+            printString += f"{round(changeInfo[0][i], 4) : <10} "
+        printString += f"| {round(baseZj, 4)}\n"
+        printString += "Cj - Zj | "
+        for i in range(len(changeInfo[0])):
+            printString += f"{round(changeInfo[1][i], 4) : <10} "
+        printString += "\n--------------------------------------------------------------"
+        print(printString)
+    else:
+        printString = "--------------------------------------------------------------\n"
+        printString += "Zj      | "
+        for i in range(len(changeInfo[0])):
+            printString += f"{buildMString(changeInfo[0][i]) : <10} "
+        printString += f"| {buildMString(baseZj)}\n"
+        printString += "Cj - Zj | "
+        for i in range(len(changeInfo[1])):
+            printString += f"{buildMString(changeInfo[1][i]) : <10} "
+        printString += "\n--------------------------------------------------------------"
+        print(printString)
+        
 # Calcula o Zj e o Cj - Zj, retornando uma matriz com os valores de ambos.
 def calcContribution(function, matrix, baseVars):
     result = list()
@@ -70,13 +99,13 @@ def calcZjBase(func, baseVars, base):
     return result
 
 # Realiza iteração alterando tudo
-def iterate(func, baseVars, matrix, bases, nIterations, bestSolution):
+def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificials):
     # Matriz que armazena os valores de Zj (primeira linha) e Cj - Zj (segunda linha).
     changeInfo = calcContribution(func, matrix, baseVars)
     # Calcula a base do Zj.
     baseZj = calcZjBase(func, baseVars, bases)
 
-    printContributions(changeInfo, baseZj)
+    printContributions(changeInfo, baseZj, artificials)
     
     # Trata-se de um problema de maximização, então quanto maior, melhor.
     if bestSolution[0] <= baseZj:
@@ -88,6 +117,12 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution):
         # Verificação de sistema degenerado
         if 0 in bestSolution[2]:
             print(">> Sistema Degenerado <<")
+        # Verificação de sistema inviável
+        for i in range(len(baseVars)):
+            for j in range(len(artificials)):
+                if baseVars[i] == artificials[j]:
+                    print(">> Sistema Inviável <<")
+            
         return True
 
     # Calcula o Omega para cada variável de base e seleciona qual a coluna pivô.
@@ -131,12 +166,13 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution):
     
     return False
 
-def solve(matrix):
+def solve(matrix, numArt):
     # bestSolution[0] = Melhor base de Zj
     # bestSolution[1] = [Melhor conjunto de variáveis de base]
     # bestSolution[2] = [Melhor conjunto de valores das variáveis de base]
     bestSolution = list()
     numberOfIterations = 1
+    artificials = list()
     
     # Extraindo valores da função
     func = test_matrix[0][0 : (len(test_matrix[0]) - 1)]
@@ -146,6 +182,11 @@ def solve(matrix):
     matrix = [test_matrix[i][0 : (len(test_matrix[0]) - 1)] for i in range(1, len(test_matrix))]
     # Extraindo bases
     bases = [test_matrix[i][-1] for i in range(1, len(test_matrix))]
+    # Extraindo variaveis artificiais, se houver
+    if numArt != 0:
+        artificials = [i for i in range((len(test_matrix[0]) - (numArt + 1)), (len(test_matrix[0]) - 1), 1)]
+        for i in range(len(artificials)):
+            func[artificials[i]] = func[artificials[i]] * BigNumber.M.value
     
     # Populando inicialmente a estrutura bestSolutions
     bestSolution.append(0)
@@ -157,7 +198,7 @@ def solve(matrix):
     printIteration(baseVars, matrix, bases)
         
     numberOfIterations += 1
-    while (not iterate(func, baseVars, matrix, bases, numberOfIterations, bestSolution)):
+    while (not iterate(func, baseVars, matrix, bases, numberOfIterations, bestSolution, artificials)):
         numberOfIterations += 1
     
     print(f"Melhor resultado = {round(bestSolution[0], 4)}")
@@ -171,24 +212,41 @@ def solve(matrix):
 #                x1,    x2 >= 0
 
 # [x1, x2, x3, ..., b]
-test_matrix = [[6,5,0,0,0],
-               [1,1,1,0,5],
-               [3,2,0,1,12]]
+# test_matrix = [[6,5,0,0,0],
+#                [1,1,1,0,5],
+#                [3,2,0,1,12]]
+# numArt = 0
 
 # Exemplo com matriz maior
 # test_matrix = [[3,2,0,0,0,0],
 #                [2,1,1,0,0,100],
 #                [1,1,0,1,0,80],
 #                [1,0,0,0,1,40]]
+# numArt = 0
 
 # Exemplo de sistema sem fronteira
 # test_matrix = [[4,3,0,0,0],
 #                [1,-6,1,0,5],
 #                [3,0,0,1,11]]
+# numArt = 0
 
 # Exemplo de sistema degenerado
 # test_matrix = [[4,3,0,0,0],
 #                [2,3,1,0,8],
 #                [3,2,0,1,12]]
+# numArt = 0
 
-solve(test_matrix)
+# Exemplo de sistema inviável
+test_matrix = [[4,3,0,0,-1,0],
+               [1,4,1,0,0,3],
+               [3,1,0,-1,1,12]]
+numArt = 1
+
+# Exemplo de minimização
+# test_matrix = [[-3,-4,0,0,-1,-1,0],
+#                [2,3,-1,0,1,0,8],
+#                [5,2,0,-1,0,1,12]]
+# numArt = 2
+
+
+solve(test_matrix, numArt)
