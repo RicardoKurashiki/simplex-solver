@@ -1,59 +1,46 @@
 from enum import Enum
+import json
+
+def buildIterationStructure(baseVars, matrix, bases, changeInfo, baseZj):
+    resultData = {}
+    resultData["bases"] = baseVars[:]
+
+    print(matrix)
+
+    resultMatrix = list()
+    
+    for i in range(len(matrix) + len(changeInfo)):
+        tempList = list()
+        if i < len(matrix):
+            for j in range(len(matrix[0]) + 1):
+                # Populando a matriz com as variáveis de base
+                if j < len(matrix[0]):
+                    tempList.append(matrix[i][j])
+                else:
+                    tempList.append(bases[i])
+            resultMatrix.append(tempList)
+        else:
+            tempIndex = i % len(matrix)
+            for j in range(len(changeInfo[0]) + 1):
+                # Populando a matriz com cálculos de impacto
+                if j < len(changeInfo[0]):
+                    tempList.append(changeInfo[tempIndex][j])
+                else:
+                    tempList.append(baseZj)
+            resultMatrix.append(tempList)
+    
+    # Removendo calculo de base para o Cj - Zj
+    resultMatrix[-1][-1] = 0.0
+    resultData["matrix"] = resultMatrix
+    print(resultMatrix)
+    print("")
+    
+    return resultData
 
 # TODO: Ver se consegue pensar em outra lógica para lidar com os Ms, senão, usa isso mesmo.
 # Funciona, mas não é muito elegante.
 class BigNumber(Enum):
     M = 1000000000
-
-# Constrói e printa cabeçalho.
-def buildHeader(func, artificials):
-    printString = f"{'|' : >9} "
-    
-    for i in range(len(func)):
-        tempString = ""
-        if i in artificials:
-            tempString = f"a{artificials.index(i) + 1} "
-        else:
-            tempString = f"x{i+1} "
-        printString += f"{tempString : <11}"
-        
-    printString += f"| {'b' : <11}"
-    print(printString)
-    
-
-# Construção de string com M para mostrar iteração
-def buildContribStr(value):
-    if abs(value / BigNumber.M.value) >= 0.1:
-        tempString = f"{round(value / BigNumber.M.value,1)}M"
-    else:
-        tempString = f"{round(value, 4)}"
-
-    return tempString
-
-# Print na interface gráfica de cada iteração
-# TODO: Diferenciar as variáveis artificiais (a...) das variáveis de folga (x...).
-def printIteration(baseVars, matrix, bases):
-    printString = ""
-    for i in range(len(baseVars)):
-        printString += f"x{baseVars[i] + 1} {'|' : >6} "
-        for j in range(len(matrix[i])):
-            printString += f"{round(matrix[i][j], 4) : <10} "
-        printString += f"| {round(bases[i],4)}\n"
-
-    print(printString[:-1])
-
-# Print na interface gráfica de cada contribuição
-def printContributions(changeInfo, baseZj, artificials):
-    printString = "--------------------------------------------------------------\n"
-    printString += f"Zj {'|' : >6} "
-    for i in range(len(changeInfo[0])):
-        printString += f"{buildContribStr(changeInfo[0][i]) : <10} "
-    printString += f"| {buildContribStr(baseZj)}\n"
-    printString += "Cj - Zj | "
-    for i in range(len(changeInfo[1])):
-        printString += f"{buildContribStr(changeInfo[1][i]) : <10} "
-    printString += "\n--------------------------------------------------------------"
-    print(printString)
         
 # Calcula o Zj e o Cj - Zj, retornando uma matriz com os valores de ambos.
 def calcContribution(function, matrix, baseVars):
@@ -93,8 +80,6 @@ def calcOmega(changeInfo, matrix, bases):
     return omegaValues, pColumn
 
 # Calcula base do Zj
-
-
 def calcZjBase(func, baseVars, base):
     result = 0
 
@@ -104,32 +89,34 @@ def calcZjBase(func, baseVars, base):
     return result
 
 # Realiza iteração alterando tudo
-def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificials):
+def iterate(func, baseVars, matrix, bases, bestSolution, artificials, result):
     # Matriz que armazena os valores de Zj (primeira linha) e Cj - Zj (segunda linha).
     changeInfo = calcContribution(func, matrix, baseVars)
     # Calcula a base do Zj.
     baseZj = calcZjBase(func, baseVars, bases)
-
-    printContributions(changeInfo, baseZj, artificials)
 
     # Trata-se de um problema de maximização, então quanto maior, melhor.
     if bestSolution[0] <= baseZj:
         bestSolution[0] = baseZj
         bestSolution[1] = baseVars
         bestSolution[2] = bases
+        result["bestResult"] = bestSolution
+    
+    result["iterations"].append(buildIterationStructure(baseVars, matrix, bases, changeInfo, baseZj))
 
     if (max(changeInfo[-1]) <= 0):
+        result["solver"] = "Sucesso"
         # Verificação de sistema degenerado
         # Sistema degenerado vai possuir um 0 em umas das variáveis de base da solução.
         if 0 in bestSolution[2]:
-            print(">> Sistema Degenerado <<")
+            result["solver"] = "Sistema Degenerado"
             
         # Verificação de sistema inviável
         # Sistema inviável vai possuir uma variável artificial nas variáveis de base.
         for i in range(len(baseVars)):
             for j in range(len(artificials)):
                 if baseVars[i] == artificials[j]:
-                    print(">> Sistema Inviável <<")
+                    result["solver"] = "Sistema Inviável"
 
         return True
 
@@ -145,7 +132,7 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificial
             break
 
     if not viableOmega:
-        print(">> Sistema sem fronteira <<")
+        result["solver"] = "Sistema sem fronteira"
         return True
 
     # Verifica linha pivô - Menor valor positivo ou igual a zero.
@@ -173,18 +160,16 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificial
         matrix[pLine][i] = matrix[pLine][i]/pElement
     bases[pLine] = bases[pLine]/pElement
 
-    print(f"{nIterations}° Iteracao")
-    printIteration(baseVars, matrix, bases)
-
     return False
 
 
 def solve(input_matrix):
+    solverInfo = {}
+    json_data = json.dumps({})
     # bestSolution[0] = Melhor base de Zj
     # bestSolution[1] = [Melhor conjunto de variáveis de base]
     # bestSolution[2] = [Melhor conjunto de valores das variáveis de base]
     bestSolution = list()
-    numberOfIterations = 1
     artificials = list()
 
     # Extraindo valores da função
@@ -213,20 +198,16 @@ def solve(input_matrix):
     bestSolution.append(baseVars)
     bestSolution.append(bases)
 
-    # Iteração inicial
-    # TODO: Adicionar aqui todas as variáveis, como se fosse um cabeçalho.
-    buildHeader(func, artificials)
-    print("--------------------------------------------------------------")
-    print(f"{numberOfIterations}° Iteracao")
-    printIteration(baseVars, matrix, bases)
-
-    numberOfIterations += 1
-    while (not iterate(func, baseVars, matrix, bases, numberOfIterations, bestSolution, artificials)):
-        numberOfIterations += 1
-
-    print(f"Melhor resultado = {round(bestSolution[0], 4)}")
-    for i in range(len(bestSolution[1])):
-        print(f"x{bestSolution[1][i] + 1} = {round(bestSolution[2][i], 4)}")
+    solverInfo["solver"] = ""
+    solverInfo["bestResult"] = bestSolution
+    solverInfo["iterations"] = list()
+    
+    while (not iterate(func, baseVars, matrix, bases, bestSolution, artificials, solverInfo)):
+        pass
+    
+    # Parte experimental do JSON
+    json_data = json.dumps(solverInfo)
+    return json_data
 
 # Exemplo:
 # Maximizar L: 6*x1 + 5*x2
