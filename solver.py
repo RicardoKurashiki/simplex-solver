@@ -1,11 +1,19 @@
 from enum import Enum
 import json
 
+def detectArtificialsInBase(artificials, baseVars):
+    result = False
+    
+    for i in range(len(baseVars)):
+            for j in range(len(artificials)):
+                if baseVars[i] == artificials[j]:
+                    result = True
+    
+    return result
+
 def buildIterationStructure(baseVars, matrix, bases, changeInfo, baseZj):
     resultData = {}
     resultData["bases"] = baseVars[:]
-
-    print(matrix)
 
     resultMatrix = list()
     
@@ -89,14 +97,22 @@ def calcZjBase(func, baseVars, base):
     return result
 
 # Realiza iteração alterando tudo
-def iterate(func, baseVars, matrix, bases, bestSolution, artificials, result):
+def iterate(func, baseVars, matrix, bases, bestSolution, artificials, result, isMin):
     # Matriz que armazena os valores de Zj (primeira linha) e Cj - Zj (segunda linha).
     changeInfo = calcContribution(func, matrix, baseVars)
     # Calcula a base do Zj.
-    baseZj = calcZjBase(func, baseVars, bases)
+    if (detectArtificialsInBase(artificials, baseVars)):
+        baseZj = 0
+    else:
+        baseZj = calcZjBase(func, baseVars, bases)
 
     # Trata-se de um problema de maximização, então quanto maior, melhor.
-    if bestSolution[0] <= baseZj:
+    if not isMin and bestSolution[0] <= baseZj:
+        bestSolution[0] = baseZj
+        bestSolution[1] = baseVars
+        bestSolution[2] = bases
+        result["bestResult"] = bestSolution
+    elif isMin and bestSolution[0] >= baseZj:
         bestSolution[0] = baseZj
         bestSolution[1] = baseVars
         bestSolution[2] = bases
@@ -113,10 +129,8 @@ def iterate(func, baseVars, matrix, bases, bestSolution, artificials, result):
             
         # Verificação de sistema inviável
         # Sistema inviável vai possuir uma variável artificial nas variáveis de base.
-        for i in range(len(baseVars)):
-            for j in range(len(artificials)):
-                if baseVars[i] == artificials[j]:
-                    result["solver"] = "Sistema Inviável"
+        if (detectArtificialsInBase(artificials, baseVars)):
+            result["solver"] = "Sistema Inviável"
 
         return True
 
@@ -163,7 +177,7 @@ def iterate(func, baseVars, matrix, bases, bestSolution, artificials, result):
     return False
 
 
-def solve(input_matrix):
+def solve(input_matrix, nArtificials = 0, isMin = False):
     solverInfo = {}
     json_data = json.dumps({})
     # bestSolution[0] = Melhor base de Zj
@@ -184,11 +198,9 @@ def solve(input_matrix):
     bases = [input_matrix[i][-1] for i in range(1, len(input_matrix))]
 
     # Extraindo variaveis artificiais, se houver
-    # TODO: Esse método de estimativa de qtd de variáveis artificiais está estranho, rever isso aqui.
-    numArt = len(func) - (2 * (len(matrix)))
-    if numArt != 0:
+    if nArtificials != 0:
         artificials = [i for i in range(
-            (len(input_matrix[0]) - (numArt + 1)), (len(input_matrix[0]) - 1), 1)]
+            (len(input_matrix[0]) - (nArtificials + 1)), (len(input_matrix[0]) - 1), 1)]
         # Alterando coeficientes da função para valores tendendo ao infinito
         for i in range(len(artificials)):
             func[artificials[i]] = func[artificials[i]] * BigNumber.M.value
@@ -202,11 +214,12 @@ def solve(input_matrix):
     solverInfo["bestResult"] = bestSolution
     solverInfo["iterations"] = list()
     
-    while (not iterate(func, baseVars, matrix, bases, bestSolution, artificials, solverInfo)):
+    while (not iterate(func, baseVars, matrix, bases, bestSolution, artificials, solverInfo, isMin)):
         pass
     
     # Parte experimental do JSON
     json_data = json.dumps(solverInfo)
+    print(json_data)
     return json_data
 
 # Exemplo:
@@ -242,9 +255,9 @@ def solve(input_matrix):
 #                 [3,1,0,-1,1,12]]
 
 # Exemplo de minimização
-# input_matrix = [[-3,-4,0,0,-1,-1,0],
-#                [2,3,-1,0,1,0,8],
-#                [5,2,0,-1,0,1,12]]
+input_matrix = [[-3,-4,0,0,-1,-1,0],
+               [2,3,-1,0,1,0,8],
+               [5,2,0,-1,0,1,12]]
 
 
-# solve(input_matrix)
+solve(input_matrix, 2, True)
