@@ -255,9 +255,9 @@ def solve(input_matrix, nArtificials = 0, isMin = False):
 #                 [3,1,0,-1,1,12]]
 
 # Exemplo de minimização
-input_matrix = [[-3,-4,0,0,-1,-1,0],
-               [2,3,-1,0,1,0,8],
-               [5,2,0,-1,0,1,12]]
+# input_matrix = [[-3,-4,0,0,-1,-1,0],
+#                [2,3,-1,0,1,0,8],
+#                [5,2,0,-1,0,1,12]]
 
 
-solve(input_matrix, 2, True)
+# solve(input_matrix, 2, True)
