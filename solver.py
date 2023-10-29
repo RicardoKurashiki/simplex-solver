@@ -1,6 +1,19 @@
 from enum import Enum
 import json
 
+# TODO: Ver se consegue pensar em outra lógica para lidar com os Ms, senão, usa isso mesmo.
+# Funciona, mas não é muito elegante.
+class BigNumber(Enum):
+    M = 1000000000
+
+def buildMString(value):
+    if abs(value / BigNumber.M.value) >= 0.1:
+        tempString = f"{round(value / BigNumber.M.value,1)}M"
+    else:
+        tempString = f"{round(value, 4)}"
+
+    return tempString
+
 def detectArtificialsInBase(artificials, baseVars):
     result = False
     
@@ -23,18 +36,18 @@ def buildIterationStructure(baseVars, matrix, bases, changeInfo, baseZj):
             for j in range(len(matrix[0]) + 1):
                 # Populando a matriz com as variáveis de base
                 if j < len(matrix[0]):
-                    tempList.append(matrix[i][j])
+                    tempList.append(f"{round(matrix[i][j], 4)}")
                 else:
-                    tempList.append(bases[i])
+                    tempList.append(f"{round(bases[i], 4)}")
             resultMatrix.append(tempList)
         else:
             tempIndex = i % len(matrix)
             for j in range(len(changeInfo[0]) + 1):
                 # Populando a matriz com cálculos de impacto
                 if j < len(changeInfo[0]):
-                    tempList.append(changeInfo[tempIndex][j])
+                    tempList.append(f"{buildMString(changeInfo[tempIndex][j])}")
                 else:
-                    tempList.append(baseZj)
+                    tempList.append(f"{buildMString(baseZj)}")
             resultMatrix.append(tempList)
     
     # Removendo calculo de base para o Cj - Zj
@@ -44,11 +57,6 @@ def buildIterationStructure(baseVars, matrix, bases, changeInfo, baseZj):
     print("")
     
     return resultData
-
-# TODO: Ver se consegue pensar em outra lógica para lidar com os Ms, senão, usa isso mesmo.
-# Funciona, mas não é muito elegante.
-class BigNumber(Enum):
-    M = 1000000000
         
 # Calcula o Zj e o Cj - Zj, retornando uma matriz com os valores de ambos.
 def calcContribution(function, matrix, baseVars):
