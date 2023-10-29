@@ -1,14 +1,12 @@
 from enum import Enum
 
+# TODO: Ver se consegue pensar em outra lógica para lidar com os Ms, senão, usa isso mesmo.
 class BigNumber(Enum):
     M = 1000000000
-    
+
+# Construção de string com M para mostrar iteração
 def buildMString(value):
-    # print(value)
     if abs(value / BigNumber.M.value) >= 0.1:
-        # if (value < 0):
-        #     tempString = f"{(value + 0) // BigNumber.M.value}M"
-        # else:
         tempString = f"{round(value / BigNumber.M.value,1)}M"
     else:
         tempString = f"{round(value, 4)}"
@@ -166,7 +164,7 @@ def iterate(func, baseVars, matrix, bases, nIterations, bestSolution, artificial
     
     return False
 
-def solve(matrix, numArt):
+def solve(input_matrix):
     # bestSolution[0] = Melhor base de Zj
     # bestSolution[1] = [Melhor conjunto de variáveis de base]
     # bestSolution[2] = [Melhor conjunto de valores das variáveis de base]
@@ -175,16 +173,21 @@ def solve(matrix, numArt):
     artificials = list()
     
     # Extraindo valores da função
-    func = test_matrix[0][0 : (len(test_matrix[0]) - 1)]
+    func = input_matrix[0][0 : (len(input_matrix[0]) - 1)]
     # Extraindo variáveis de base
-    baseVars = [i for i in range((len(test_matrix[0]) - len(test_matrix)), (len(test_matrix[0]) - 1), 1)]
+    baseVars = [i for i in range((len(input_matrix[0]) - len(input_matrix)), (len(input_matrix[0]) - 1), 1)]
     # Extraindo matriz
-    matrix = [test_matrix[i][0 : (len(test_matrix[0]) - 1)] for i in range(1, len(test_matrix))]
+    matrix = [input_matrix[i][0 : (len(input_matrix[0]) - 1)] for i in range(1, len(input_matrix))]
     # Extraindo bases
-    bases = [test_matrix[i][-1] for i in range(1, len(test_matrix))]
+    bases = [input_matrix[i][-1] for i in range(1, len(input_matrix))]
+    
     # Extraindo variaveis artificiais, se houver
+    # TODO: Esse método de estimativa de qtd de variáveis artificiais está estranho, rever isso aqui.
+    numArt = len(func) - (2 * (len(matrix)))
+    print(numArt)
     if numArt != 0:
-        artificials = [i for i in range((len(test_matrix[0]) - (numArt + 1)), (len(test_matrix[0]) - 1), 1)]
+        artificials = [i for i in range((len(input_matrix[0]) - (numArt + 1)), (len(input_matrix[0]) - 1), 1)]
+        # Alterando coeficientes da função para valores tendendo ao infinito
         for i in range(len(artificials)):
             func[artificials[i]] = func[artificials[i]] * BigNumber.M.value
     
@@ -212,41 +215,35 @@ def solve(matrix, numArt):
 #                x1,    x2 >= 0
 
 # [x1, x2, x3, ..., b]
-# test_matrix = [[6,5,0,0,0],
+# input_matrix = [[6,5,0,0,0],
 #                [1,1,1,0,5],
 #                [3,2,0,1,12]]
-# numArt = 0
 
 # Exemplo com matriz maior
-# test_matrix = [[3,2,0,0,0,0],
+# input_matrix = [[3,2,0,0,0,0],
 #                [2,1,1,0,0,100],
 #                [1,1,0,1,0,80],
 #                [1,0,0,0,1,40]]
-# numArt = 0
 
 # Exemplo de sistema sem fronteira
-# test_matrix = [[4,3,0,0,0],
+# input_matrix = [[4,3,0,0,0],
 #                [1,-6,1,0,5],
 #                [3,0,0,1,11]]
-# numArt = 0
 
 # Exemplo de sistema degenerado
-# test_matrix = [[4,3,0,0,0],
+# input_matrix = [[4,3,0,0,0],
 #                [2,3,1,0,8],
 #                [3,2,0,1,12]]
-# numArt = 0
 
 # Exemplo de sistema inviável
-test_matrix = [[4,3,0,0,-1,0],
+input_matrix = [[4,3,0,0,-1,0],
                [1,4,1,0,0,3],
                [3,1,0,-1,1,12]]
-numArt = 1
 
 # Exemplo de minimização
-# test_matrix = [[-3,-4,0,0,-1,-1,0],
+# input_matrix = [[-3,-4,0,0,-1,-1,0],
 #                [2,3,-1,0,1,0,8],
 #                [5,2,0,-1,0,1,12]]
-# numArt = 2
 
 
-solve(test_matrix, numArt)
+solve(input_matrix)
