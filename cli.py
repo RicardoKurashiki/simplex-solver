@@ -4,18 +4,47 @@ from enums import *
 from solver import *
 
 solver_type = SolverType.MAXIMIZAR
+aux_vars = 0
 
 
 def init(stdscr):
     stdscr.clear()
     stdscr.addstr("|----------------------------------------------|\n")
-    stdscr.addstr("|                   SIMPLEX                    |\n")
+    stdscr.addstr(
+        f"|              SIMPLEX - {solver_type.name}             |\n")
     stdscr.addstr("|----------------------------------------------|\n")
     stdscr.addstr("|                   ALUNOS                     |\n")
     stdscr.addstr("| Carlos Eduardo Marques Assunção Torres       |\n")
     stdscr.addstr("| Ricardo Godoi Kurashiki                      |\n")
     stdscr.addstr("|----------------------------------------------|\n")
     stdscr.addstr("\n")
+
+
+def get_simplex_type(stdscr):
+    curses.curs_set(0)
+    global solver_type
+
+    types = [SolverType.MAXIMIZAR, SolverType.MINIMIZAR]
+    current = 0
+
+    while True:
+        stdscr.clear()
+        stdscr.addstr("[>] Selecione o tipo:\n")
+        for i, value in enumerate(types):
+            if i == current:
+                stdscr.addstr(f"> {value}\n", curses.A_REVERSE)
+            else:
+                stdscr.addstr(f"  {value}\n")
+        key = stdscr.getch()
+
+        if key == 10:
+            solver_type = types[current]
+            curses.curs_set(1)
+            break
+        elif key == curses.KEY_UP and current > 0:
+            current -= 1
+        elif key == curses.KEY_DOWN and current < len(types) - 1:
+            current += 1
 
 
 def get_simplex_size(stdscr):
@@ -57,7 +86,7 @@ def get_inequation(stdscr):
         stdscr.addstr("[>] Selecione o tipo de inequação:\n")
         for i, value in enumerate(valid_inequations):
             if i == current:
-                stdscr.addstr(f"  [{value}]\n", curses.A_REVERSE)
+                stdscr.addstr(f"> {value}\n", curses.A_REVERSE)
             else:
                 stdscr.addstr(f"  {value}\n")
         key = stdscr.getch()
@@ -166,40 +195,89 @@ def get_simplex_data(stdscr, num_variables, num_constraints):
 
 
 def remove_inequation(variables: list, constraints: list):
-    num_vars = len(variables)
-    num_constraints = len(constraints)
+    def maximize(variables: list, constraints: list):
+        num_vars = len(variables)
 
-    constraints_values = [c[:num_vars] for c in constraints]
-    constraints_ineq = [c[num_vars] for c in constraints]
-    constraints_b = [c[-1] for c in constraints]
+        constraints_values = [c[:num_vars] for c in constraints]
+        constraints_ineq = [c[num_vars] for c in constraints]
+        constraints_b = [c[-1] for c in constraints]
 
-    # Maximização
-    for i, value in enumerate(constraints_values):
-        if (constraints_ineq[i] == "<="):
+        for i, value in enumerate(constraints_values):
+            if (constraints_ineq[i] == "<="):
+                for j, value in enumerate(constraints_values):
+                    if i == j:
+                        value += [1.0]
+                    else:
+                        value += [0.0]
+            elif (constraints_ineq[i] == ">="):
+                constraints_values[i] = [-v for v in value]
+                constraints_b[i] = -constraints_b[i]
+                for j, value in enumerate(constraints_values):
+                    if i == j:
+                        value += [1.0]
+                    else:
+                        value += [0.0]
+
+        new_constraints = []
+        for i in range(len(constraints_values)):
+            row = constraints_values[i] + [constraints_b[i]]
+            new_constraints.append(row)
+
+        row_len = len(new_constraints[0])
+        variables += [0.0] * (row_len - num_vars)
+        return variables, new_constraints
+
+    def minimize(variables: list, constraints: list):
+        global aux_vars
+        num_vars = len(variables)
+
+        constraints_values = [c[:num_vars] for c in constraints]
+        constraints_ineq = [c[num_vars] for c in constraints]
+        constraints_b = [c[-1] for c in constraints]
+
+        for i, value in enumerate(constraints_values):
+            if (constraints_ineq[i] == ">="):
+                for j, value in enumerate(constraints_values):
+                    if i == j:
+                        value += [-1.0]
+                    else:
+                        value += [0.0]
+            elif (constraints_ineq[i] == "<="):
+                constraints_values[i] = [-v for v in value]
+                constraints_b[i] = -constraints_b[i]
+                for j, value in enumerate(constraints_values):
+                    if i == j:
+                        value += [-1.0]
+                    else:
+                        value += [0.0]
+        for i, value in enumerate(constraints_values):
             for j, value in enumerate(constraints_values):
                 if i == j:
                     value += [1.0]
-                else:
-                    value += [0.0]
-        elif (constraints_ineq[i] == ">="):
-            constraints_values[i] = [-v for v in value]
-            constraints_b[i] = -constraints_b[i]
-            for j, value in enumerate(constraints_values):
-                if i == j:
-                    value += [1.0]
+                    aux_vars += 1
                 else:
                     value += [0.0]
 
-    new_constraints = []
-    for i in range(len(constraints_values)):
-        row = constraints_values[i] + [constraints_b[i]]
-        new_constraints.append(row)
+        new_constraints = []
+        for i in range(len(constraints_values)):
+            row = constraints_values[i] + [constraints_b[i]]
+            new_constraints.append(row)
 
-    row_len = len(new_constraints[0])
-    variables += [0.0] * (row_len - num_vars)
-    result = [variables] + new_constraints
+        num_constraints = len(constraints)
+        num_new_constraints = len(new_constraints)
+        variables = [-v for v in variables]
+        variables += [0.0] * num_constraints
+        variables += [-1.0] * aux_vars
+        variables += [0.0]
+        return variables, new_constraints
 
-    return variables, new_constraints, result
+    if (solver_type == SolverType.MAXIMIZAR):
+        variables, constraints = maximize(variables, constraints)
+    else:
+        variables, constraints = minimize(variables, constraints)
+
+    result = [variables] + constraints
+    return variables, constraints, result
 
 
 def showTable(stdscr, variables: list, constraints: list):
@@ -240,8 +318,8 @@ def showResult(stdscr, result: dict):
         for i in range(len(baseVars)):
             printStr += f"x{baseVars[i] + 1} {'|' : >6} "
             for j in range(len(values[i])):
-                printStr += f"{round(values[i][j], 4) : <10} "
-            printStr += f"| {round(bases[i], 4)}\n"
+                printStr += f"{values[i][j] : <10} "
+            printStr += f"| {bases[i]}\n"
         stdscr.addstr(printStr)
 
     solver_result = result['solver']
@@ -258,20 +336,22 @@ def showResult(stdscr, result: dict):
         stdscr.getch()
 
     stdscr.clear()
-    stdscr.addstr('[!] Solução ótima\n\n')
+    stdscr.addstr(f'[!] {solver_result}\n\n')
     stdscr.addstr(f'Z = {best_result[0]}\n')
     for i, value in enumerate(best_result[1]):
         stdscr.addstr(
-            f"x{best_result[1][i] + 1} = {round(best_result[2][i], 4)}\n")
+            f"x{best_result[1][i] + 1} = {best_result[2][i]}\n")
     stdscr.addstr('\n[ENTER] Para finalizar')
     stdscr.refresh()
     stdscr.getch()
 
 
 def main(stdscr):
+    # Seleciona se é problema de maximização ou minimização
+    get_simplex_type(stdscr)
+    curses.curs_set(1)
     # Mostra nomes dos alunos
     init(stdscr)
-    curses.curs_set(1)
     # Pega o tamanho do problema a ser resolvido
     num_variables, num_constraints = get_simplex_size(stdscr)
     curses.curs_set(0)
@@ -279,13 +359,20 @@ def main(stdscr):
     variables, constraints = get_simplex_data(
         stdscr, num_variables, num_constraints)
     stdscr.clear()
-
     showTable(stdscr, variables, constraints)
 
     variables, constraints, solver_input = remove_inequation(
         variables, constraints)
 
-    result = json.loads(solve(solver_input))
+    print("SOLVER:")
+    print(solver_input)
+    print(f"AUX: {aux_vars}")
+    print(f"TYPE: {solver_type}")
+    print("-"*80)
+
+    result = json.loads(solve(solver_input, isMin=(
+        solver_type == SolverType.MINIMIZAR),
+        nArtificials=2))
 
     showResult(stdscr, result)
 
