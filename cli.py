@@ -1,4 +1,8 @@
 import curses
+from enums import *
+from solver import *
+
+solver_type = SolverType.MAXIMIZAR
 
 
 def init(stdscr):
@@ -43,7 +47,7 @@ def get_simplex_size(stdscr):
 
 
 def get_inequation(stdscr):
-    valid_inequations = [">=", "<=", ">", "<", "="]
+    valid_inequations = [">=", "<=", "="]
     current = 0
 
     while True:
@@ -65,17 +69,24 @@ def get_inequation(stdscr):
             current += 1
 
 
-def print_matrix(stdscr, matrix, cursor_x, cursor_y, title=None):
+def print_matrix(stdscr, matrix, cursor_x=None, cursor_y=None, title=None):
     stdscr.clear()
     if (title != None):
         stdscr.addstr(f"[>] {title}\n\n")
     for i, row in enumerate(matrix):
-        for j, value in enumerate(row):
-            if i == cursor_x and j == cursor_y:
-                stdscr.addstr(f"[{value}]", curses.A_REVERSE)
+        if (cursor_x != None):
+            for j, value in enumerate(row):
+                if i == cursor_x and j == cursor_y:
+                    stdscr.addstr(f"[{value}]", curses.A_REVERSE)
+                else:
+                    stdscr.addstr(f" {value} ")
+            stdscr.addstr("\n")
+        else:
+            if i == cursor_y:
+                stdscr.addstr(f"[{row}]", curses.A_REVERSE)
             else:
-                stdscr.addstr(f" {value} ")
-        stdscr.addstr("\n")
+                stdscr.addstr(f" {row} ")
+    stdscr.addstr("\n")
     stdscr.addstr("\n[SETAS] para selecionar a célula\n")
     stdscr.addstr("[E] para editar o valor da célula\n")
     stdscr.addstr("[ENTER] para continuar\n")
@@ -100,10 +111,11 @@ def put_value(stdscr):
 
 
 def get_simplex_data(stdscr, num_variables, num_constraints):
-    variables = [[0.0] * num_variables]
-    cursor_x, cursor_y = 0, 0
+    # Get Variables
+    variables = [0.0] * num_variables
+    cursor_y = 0
     while True:
-        print_matrix(stdscr, variables, cursor_x, cursor_y, title="Variáveis")
+        print_matrix(stdscr, variables, cursor_y=cursor_y, title="Variáveis")
         key = stdscr.getch()
         if key == curses.KEY_LEFT and cursor_y > 0:
             cursor_y -= 1
@@ -111,10 +123,11 @@ def get_simplex_data(stdscr, num_variables, num_constraints):
             cursor_y += 1
         elif key == ord("e") or key == ord("E"):
             value = put_value(stdscr)
-            variables[cursor_x][cursor_y] = value
+            variables[cursor_y] = value
         elif key in [10, 13]:
             break
 
+    # Get Constraints
     constraints_values = [
         [0.0] * num_variables for _ in range(num_constraints)]
     constraints_inequations = ["<="] * num_constraints
@@ -151,6 +164,59 @@ def get_simplex_data(stdscr, num_variables, num_constraints):
     return variables, constraints
 
 
+def removeInequalities(variables: list, constraints: list):
+    num_vars = len(variables)
+    num_constraints = len(constraints)
+
+    constraints_values = [c[:num_vars] for c in constraints]
+    constraints_ineq = [c[num_vars] for c in constraints]
+    constraints_b = [c[-1] for c in constraints]
+
+    # Maximização
+    for i, value in enumerate(constraints_values):
+        if (constraints_ineq[i] == "<="):
+            for j, value in enumerate(constraints_values):
+                if i == j:
+                    value += [1.0]
+                else:
+                    value += [0.0]
+        elif (constraints_ineq[i] == ">="):
+            constraints_values[i] = [-v for v in value]
+            constraints_b[i] = -constraints_b[i]
+            for j, value in enumerate(constraints_values):
+                if i == j:
+                    value += [1.0]
+                else:
+                    value += [0.0]
+
+    new_constraints = []
+    for i in range(len(constraints_values)):
+        row = constraints_values[i] + [constraints_b[i]]
+        new_constraints.append(row)
+
+    variables += [0.0] * num_constraints
+    result = [variables] + new_constraints
+
+    return variables, new_constraints, result
+
+
+def showTable(stdscr, variables: list, constraints: list):
+    stdscr.addstr('\n')
+    for value in variables:
+        stdscr.addstr(f"  {value}  ")
+    stdscr.addstr('\n')
+    # Mostra restrições
+    for row in constraints:
+        for value in row:
+            stdscr.addstr(f'  {value}  ')
+        stdscr.addstr('\n')
+    stdscr.addstr('\n')
+    stdscr.addstr('[ENTER] Para a próxima etapa')
+    stdscr.addstr('\n')
+    stdscr.refresh()
+    stdscr.getch()
+
+
 def main(stdscr):
     # Mostra nomes dos alunos
     init(stdscr)
@@ -163,19 +229,12 @@ def main(stdscr):
         stdscr, num_variables, num_constraints)
     stdscr.clear()
 
-    # Mostra variáveis
-    for row in variables:
-        for value in row:
-            stdscr.addstr(f"  {value}  ")
-    stdscr.addstr('\n')
-    # Mostra restrições
-    for row in constraints:
-        for value in row:
-            stdscr.addstr(f'  {value}  ')
-        stdscr.addstr('\n')
+    showTable(stdscr, variables, constraints)
 
-    stdscr.refresh()
-    stdscr.getch()
+    variables, constraints, solver_input = removeInequalities(
+        variables, constraints)
+
+    solve(solver_input)
 
 
 if __name__ == "__main__":
