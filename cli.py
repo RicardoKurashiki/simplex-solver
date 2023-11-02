@@ -29,12 +29,15 @@ def get_simplex_type(stdscr):
 
     while True:
         stdscr.clear()
-        stdscr.addstr("[>] Selecione o tipo:\n")
-        for i, value in enumerate(types):
+        stdscr.addstr("[>] Selecione o tipo de resolução:\n")
+        for i, type in enumerate(types):
             if i == current:
-                stdscr.addstr(f"> {value}\n", curses.A_REVERSE)
+                stdscr.addstr(f"- {type.name}\n", curses.A_REVERSE)
             else:
-                stdscr.addstr(f"  {value}\n")
+                stdscr.addstr(f"  {type.name}\n")
+        stdscr.addstr("\n")
+        stdscr.addstr("[SETAS] para selecionar a célula\n")
+        stdscr.addstr("[ENTER] para selecionar\n")
         key = stdscr.getch()
 
         if key == 10:
@@ -86,9 +89,12 @@ def get_inequation(stdscr):
         stdscr.addstr("[>] Selecione o tipo de inequação:\n")
         for i, value in enumerate(valid_inequations):
             if i == current:
-                stdscr.addstr(f"> {value}\n", curses.A_REVERSE)
+                stdscr.addstr(f"- {value}\n", curses.A_REVERSE)
             else:
                 stdscr.addstr(f"  {value}\n")
+        stdscr.addstr("\n")
+        stdscr.addstr("[SETAS] para selecionar a célula\n")
+        stdscr.addstr("[ENTER] para selecionar\n")
         key = stdscr.getch()
 
         if key == 10:
@@ -160,7 +166,10 @@ def get_simplex_data(stdscr, num_variables, num_constraints):
     # Get Constraints
     constraints_values = [
         [0.0] * num_variables for _ in range(num_constraints)]
-    constraints_inequations = ["<="] * num_constraints
+    if (solver_type == SolverType.MAXIMIZAR):
+        constraints_inequations = ["<="] * num_constraints
+    else:
+        constraints_inequations = [">="] * num_constraints
     constraints_b = [0.0] * num_constraints
 
     constraints = []
@@ -264,7 +273,6 @@ def remove_inequation(variables: list, constraints: list):
             new_constraints.append(row)
 
         num_constraints = len(constraints)
-        num_new_constraints = len(new_constraints)
         variables = [-v for v in variables]
         variables += [0.0] * num_constraints
         variables += [-1.0] * aux_vars
@@ -298,34 +306,48 @@ def showTable(stdscr, variables: list, constraints: list):
 
 
 def showResult(stdscr, result: dict):
-    # TODO: Colocar a amostra de variáveis artificiais
     def header(matrix: list):
         print_str = f'{"|" : >9} '
         func = matrix[0][0: (len(matrix[0]) - 1)]
         for i in range(len(func)):
-            print_str += f"{f'x{i+1} ' : <11}"
+            if (aux_vars > 0):
+                # Tamanho das variáveis sem as artificiais
+                length = len(func) - aux_vars
+                if (i < length):
+                    print_str += f"{f'x{i+1} ' : <11}"
+                else:
+                    print_str += f"{f'A{i-length+1} ' : <11}"
+            else:
+                print_str += f"{f'x{i+1} ' : <11}"
         print_str += f"| {'b' : <11}"
         stdscr.addstr(print_str)
 
     def body(base_vars: list, matrix: list):
         print_str = ""
+        divider = ""
         column_len = len(matrix[0])
         row_len = len(matrix)
-        stdscr.addstr(
-            '\n--------------------------------------------------------------\n')
+        divider += f'{"-"*9}'
+        for _ in range(column_len):
+            divider += f'{"-"*12}'
+        divider += '\n'
+        stdscr.addstr("\n" + divider)
         for i in range(row_len):
             row_values = matrix[i]
             if i < row_len - 2:
                 print_str += f"x{base_vars[i] + 1}      {'|' : >1} "
             elif i == row_len - 2:
-                print_str += '--------------------------------------------------------------\n'
+                print_str += divider
                 print_str += f"Cj      {'|' : >1} "
             elif i == row_len - 1:
                 print_str += f"Cj - Zj {'|' : >1} "
             for j in range(column_len):
                 if j < column_len - 1:
-                    print_str += f"{row_values[j]}" + \
-                        " " * (11 - len(row_values[j]))
+                    print_str += f"{row_values[j]}"
+                    if (len(row_values) < 11):
+                        print_str += " " * (11 - len(row_values[j]))
+                    else:
+                        print_str += " "
                 else:
                     print_str += f"| {row_values[j]}\n"
         stdscr.addstr(print_str)
@@ -346,8 +368,11 @@ def showResult(stdscr, result: dict):
 
     stdscr.clear()
     stdscr.addstr(f'[!] {solver_result}\n\n')
-    stdscr.addstr(f'Z = {best_result[0]}\n')
-    for i, value in enumerate(best_result[1]):
+    if (solver_type == SolverType.MAXIMIZAR):
+        stdscr.addstr(f'Z = {best_result[0]}\n')
+    else:
+        stdscr.addstr(f'Z = {best_result[0] * -1}\n')
+    for i in range(len(best_result[1])):
         stdscr.addstr(
             f"x{best_result[1][i] + 1} = {best_result[2][i]}\n")
     stdscr.addstr('\n[ENTER] Para finalizar')
@@ -372,12 +397,6 @@ def main(stdscr):
 
     variables, constraints, solver_input = remove_inequation(
         variables, constraints)
-
-    print("SOLVER:")
-    print(solver_input)
-    print(f"AUX: {aux_vars}")
-    print(f"TYPE: {solver_type}")
-    print("-"*80)
 
     result = json.loads(solve(solver_input, isMin=(
         solver_type == SolverType.MINIMIZAR),
