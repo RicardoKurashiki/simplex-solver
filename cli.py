@@ -80,7 +80,8 @@ def get_simplex_size(stdscr):
 
 
 def get_inequation(stdscr):
-    valid_inequations = [">=", "<=", "="]
+    # valid_inequations = [">=", "<=", "="]
+    valid_inequations = [">=", "<="]
     current = 0
 
     while True:
@@ -206,6 +207,21 @@ def get_simplex_data(stdscr, num_variables, num_constraints):
 def remove_inequation(variables: list, constraints: list):
     def maximize(variables: list, constraints: list):
         num_vars = len(variables)
+        i = 0
+        while i < len(constraints):
+            if (solver_type == SolverType.MAXIMIZAR):
+                ineq = "<="
+                other_ineq = ">="
+            else:
+                ineq = ">="
+                other_ineq = "<="
+            value = constraints[i]
+            if ("=" in value):
+                value[num_vars] = ineq
+                new_row = value.copy()
+                new_row[num_vars] = other_ineq
+                constraints.append(new_row)
+            i += 1
 
         constraints_values = [c[:num_vars] for c in constraints]
         constraints_ineq = [c[num_vars] for c in constraints]
@@ -316,7 +332,7 @@ def showResult(stdscr, result: dict):
                 if (i < length):
                     print_str += f"{f'x{i+1} ' : <11}"
                 else:
-                    print_str += f"{f'A{i-length+1} ' : <11}"
+                    print_str += f"{f'A{i-length + 1} ' : <11}"
             else:
                 print_str += f"{f'x{i+1} ' : <11}"
         print_str += f"| {'b' : <11}"
@@ -335,7 +351,14 @@ def showResult(stdscr, result: dict):
         for i in range(row_len):
             row_values = matrix[i]
             if i < row_len - 2:
-                print_str += f"x{base_vars[i] + 1}      {'|' : >1} "
+                if (aux_vars > 0):
+                    length = (column_len - 1) - aux_vars
+                    if base_vars[i] < length:
+                        print_str += f"x{base_vars[i] + 1}      {'|' : >1} "
+                    else:
+                        print_str += f"A{base_vars[i]-length + 1}      {'|' : >1} "
+                else:
+                    print_str += f"x{base_vars[i] + 1}      {'|' : >1} "
             elif i == row_len - 2:
                 print_str += divider
                 print_str += f"Cj      {'|' : >1} "
