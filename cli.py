@@ -390,7 +390,8 @@ def showResult(stdscr, result: dict):
         stdscr.getch()
 
     stdscr.clear()
-    stdscr.addstr(f'[!] {solver_result}\n\n')
+    stdscr.addstr(f'[!] {solver_result}\n')
+    stdscr.addstr(f'[#] Iterações: {len(iterations)}\n\n')
     if (solver_type == SolverType.MAXIMIZAR):
         stdscr.addstr(f'Z = {best_result[0]}\n')
     else:

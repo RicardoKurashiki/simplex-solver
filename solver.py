@@ -3,8 +3,11 @@ import json
 
 # TODO: Ver se consegue pensar em outra lógica para lidar com os Ms, senão, usa isso mesmo.
 # Funciona, mas não é muito elegante.
+
+
 class BigNumber(Enum):
     M = 1000000000
+
 
 def buildMString(value):
     if abs(value / BigNumber.M.value) >= 0.1:
@@ -14,22 +17,24 @@ def buildMString(value):
 
     return tempString
 
+
 def detectArtificialsInBase(artificials, baseVars):
     result = False
-    
+
     for i in range(len(baseVars)):
-            for j in range(len(artificials)):
-                if baseVars[i] == artificials[j]:
-                    result = True
-    
+        for j in range(len(artificials)):
+            if baseVars[i] == artificials[j]:
+                result = True
+
     return result
+
 
 def buildIterationStructure(baseVars, matrix, bases, changeInfo, baseZj):
     resultData = {}
     resultData["bases"] = baseVars[:]
 
     resultMatrix = list()
-    
+
     for i in range(len(matrix) + len(changeInfo)):
         tempList = list()
         if i < len(matrix):
@@ -45,18 +50,21 @@ def buildIterationStructure(baseVars, matrix, bases, changeInfo, baseZj):
             for j in range(len(changeInfo[0]) + 1):
                 # Populando a matriz com cálculos de impacto
                 if j < len(changeInfo[0]):
-                    tempList.append(f"{buildMString(changeInfo[tempIndex][j])}")
+                    tempList.append(
+                        f"{buildMString(changeInfo[tempIndex][j])}")
                 else:
                     tempList.append(f"{buildMString(baseZj)}")
             resultMatrix.append(tempList)
-    
+
     # Removendo calculo de base para o Cj - Zj
     resultMatrix[-1][-1] = 0.0
     resultData["matrix"] = resultMatrix
-    
+
     return resultData
-        
+
 # Calcula o Zj e o Cj - Zj, retornando uma matriz com os valores de ambos.
+
+
 def calcContribution(function, matrix, baseVars):
     result = list()
     numberOfElements = len(matrix)
@@ -78,6 +86,8 @@ def calcContribution(function, matrix, baseVars):
     return result
 
 # Calcula Omega para cada variável de base.
+
+
 def calcOmega(changeInfo, matrix, bases):
     omegaValues = [0] * len(bases)
 
@@ -94,6 +104,8 @@ def calcOmega(changeInfo, matrix, bases):
     return omegaValues, pColumn
 
 # Calcula base do Zj
+
+
 def calcZjBase(func, baseVars, base):
     result = 0
 
@@ -103,6 +115,8 @@ def calcZjBase(func, baseVars, base):
     return result
 
 # Realiza iteração alterando tudo
+
+
 def iterate(func, baseVars, matrix, bases, bestSolution, artificials, result, isMin):
     # Matriz que armazena os valores de Zj (primeira linha) e Cj - Zj (segunda linha).
     changeInfo = calcContribution(func, matrix, baseVars)
@@ -123,16 +137,17 @@ def iterate(func, baseVars, matrix, bases, bestSolution, artificials, result, is
         bestSolution[1] = baseVars
         bestSolution[2] = bases
         result["bestResult"] = bestSolution
-    
-    result["iterations"].append(buildIterationStructure(baseVars, matrix, bases, changeInfo, baseZj))
+
+    result["iterations"].append(buildIterationStructure(
+        baseVars, matrix, bases, changeInfo, baseZj))
 
     if (max(changeInfo[-1]) <= 0):
-        result["solver"] = "Sucesso"
+        result["solver"] = "Solução Ótima"
         # Verificação de sistema degenerado
         # Sistema degenerado vai possuir um 0 em umas das variáveis de base da solução.
         if 0 in bestSolution[2]:
             result["solver"] = "Sistema Degenerado"
-            
+
         # Verificação de sistema inviável
         # Sistema inviável vai possuir uma variável artificial nas variáveis de base.
         if (detectArtificialsInBase(artificials, baseVars)):
@@ -174,16 +189,16 @@ def iterate(func, baseVars, matrix, bases, bestSolution, artificials, result, is
                 matrix[i][j] = matrix[i][j] - (coef * matrix[pLine][j])
 
             bases[i] = bases[i] - (coef * bases[pLine])
-                
+
     # Lpivo = Lpivo/Epivo
-    for i in range(len(matrix[pLine])): 
+    for i in range(len(matrix[pLine])):
         matrix[pLine][i] = matrix[pLine][i]/pElement
     bases[pLine] = bases[pLine]/pElement
 
     return False
 
 
-def solve(input_matrix, nArtificials = 0, isMin = False):
+def solve(input_matrix, nArtificials=0, isMin=False):
     solverInfo = {}
     json_data = json.dumps({})
     # bestSolution[0] = Melhor base de Zj
@@ -219,10 +234,10 @@ def solve(input_matrix, nArtificials = 0, isMin = False):
     solverInfo["solver"] = ""
     solverInfo["bestResult"] = bestSolution
     solverInfo["iterations"] = list()
-    
+
     while (not iterate(func, baseVars, matrix, bases, bestSolution, artificials, solverInfo, isMin)):
         pass
-    
+
     # Parte experimental do JSON
     json_data = json.dumps(solverInfo)
     return json_data
