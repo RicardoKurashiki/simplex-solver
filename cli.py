@@ -391,13 +391,22 @@ def showResult(stdscr, result: dict):
 
     stdscr.clear()
     stdscr.addstr(f'[!] {solver_result}\n\n')
+    column_len = len(matrix[0])
     if (solver_type == SolverType.MAXIMIZAR):
         stdscr.addstr(f'Z = {best_result[0]}\n')
     else:
         stdscr.addstr(f'Z = {best_result[0] * -1}\n')
     for i in range(len(best_result[1])):
-        stdscr.addstr(
-            f"x{best_result[1][i] + 1} = {best_result[2][i]}\n")
+        if (aux_vars > 0):
+            length = (column_len - 1) - aux_vars
+            if best_result[1][i] < length:
+                stdscr.addstr(
+                    f"x{best_result[1][i] + 1} = {best_result[2][i]}\n")
+            else:
+                stdscr.addstr(
+                    f"A{best_result[1][i]-length + 1} = {best_result[2][i]}\n")
+        else:
+            stdscr.addstr(f"x{best_result[1][i] + 1} = {best_result[2][i]}\n")
     stdscr.addstr('\n[ENTER] Para finalizar')
     stdscr.refresh()
     stdscr.getch()
