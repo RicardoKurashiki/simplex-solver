@@ -298,29 +298,37 @@ def showTable(stdscr, variables: list, constraints: list):
 
 
 def showResult(stdscr, result: dict):
+    # TODO: Colocar a amostra de variáveis artificiais
     def header(matrix: list):
-        printStr = f'{"|" : >9} '
+        print_str = f'{"|" : >9} '
         func = matrix[0][0: (len(matrix[0]) - 1)]
         for i in range(len(func)):
-            printStr += f"{f'x{i+1} ' : <11}"
-        printStr += f"| {'b' : <11}"
-        stdscr.addstr(printStr)
+            print_str += f"{f'x{i+1} ' : <11}"
+        print_str += f"| {'b' : <11}"
+        stdscr.addstr(print_str)
 
-    def body(matrix: list):
-        baseVars = [i for i in range(
-            (len(matrix[0]) - len(matrix)), (len(matrix[0]) - 1), 1)]
-        values = [matrix[i][0: (len(matrix[0]) - 1)]
-                  for i in range(1, len(matrix))]
-        bases = [matrix[i][-1] for i in range(1, len(matrix))]
+    def body(base_vars: list, matrix: list):
+        print_str = ""
+        column_len = len(matrix[0])
+        row_len = len(matrix)
         stdscr.addstr(
             '\n--------------------------------------------------------------\n')
-        printStr = ""
-        for i in range(len(baseVars)):
-            printStr += f"x{baseVars[i] + 1} {'|' : >6} "
-            for j in range(len(values[i])):
-                printStr += f"{values[i][j] : <10} "
-            printStr += f"| {bases[i]}\n"
-        stdscr.addstr(printStr)
+        for i in range(row_len):
+            row_values = matrix[i]
+            if i < row_len - 2:
+                print_str += f"x{base_vars[i] + 1}      {'|' : >1} "
+            elif i == row_len - 2:
+                print_str += '--------------------------------------------------------------\n'
+                print_str += f"Cj      {'|' : >1} "
+            elif i == row_len - 1:
+                print_str += f"Cj - Zj {'|' : >1} "
+            for j in range(column_len):
+                if j < column_len - 1:
+                    print_str += f"{row_values[j]}" + \
+                        " " * (11 - len(row_values[j]))
+                else:
+                    print_str += f"| {row_values[j]}\n"
+        stdscr.addstr(print_str)
 
     solver_result = result['solver']
     best_result = result['bestResult']
@@ -328,9 +336,10 @@ def showResult(stdscr, result: dict):
     for i, iteration in enumerate(iterations):
         stdscr.clear()
         matrix = iteration['matrix']
+        base_vars = iteration['bases']
         stdscr.addstr(f'[>] {i+1}º iteração\n\n')
         header(matrix)
-        body(matrix)
+        body(base_vars, matrix)
         stdscr.addstr('\n[ENTER] Para a próxima etapa\n\n')
         stdscr.refresh()
         stdscr.getch()
@@ -372,7 +381,7 @@ def main(stdscr):
 
     result = json.loads(solve(solver_input, isMin=(
         solver_type == SolverType.MINIMIZAR),
-        nArtificials=2))
+        nArtificials=aux_vars))
 
     showResult(stdscr, result)
 
