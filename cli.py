@@ -393,12 +393,12 @@ def showResult(stdscr, result: dict):
     stdscr.addstr(f'[!] {solver_result}\n')
     stdscr.addstr(f'[#] Iterações: {len(iterations)}\n\n')
     if (solver_type == SolverType.MAXIMIZAR):
-        stdscr.addstr(f'Z = {best_result[0]}\n')
+        stdscr.addstr(f'Z = {round(best_result[0], 4)}\n')
     else:
-        stdscr.addstr(f'Z = {best_result[0] * -1}\n')
+        stdscr.addstr(f'Z = {round((best_result[0] * -1), 4)}\n')
     for i in range(len(best_result[1])):
         stdscr.addstr(
-            f"x{best_result[1][i] + 1} = {best_result[2][i]}\n")
+            f"x{best_result[1][i] + 1} = {round(best_result[2][i, 4])}\n")
     stdscr.addstr('\n[ENTER] Para finalizar')
     stdscr.refresh()
     stdscr.getch()
