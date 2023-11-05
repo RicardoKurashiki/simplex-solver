@@ -396,7 +396,8 @@ def showResult(stdscr, result: dict):
             stdscr.addstr('\n[ENTER] Para ver o resultado')
         else:
             stdscr.addstr('\n[ENTER] Para a próxima etapa')
-        stdscr.addstr('\n[BACKSPACE] Para a etapa anterior\n\n')
+        if (i > 0):
+            stdscr.addstr('\n[BACKSPACE] Para a etapa anterior\n\n')
         stdscr.refresh()
         key = stdscr.getch()
         if key == 10:
