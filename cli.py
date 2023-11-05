@@ -274,21 +274,18 @@ def remove_inequation(variables: list, constraints: list):
                         value += [-1.0]
                     else:
                         value += [0.0]
-            elif (constraints_ineq[i] == "<="):
-                constraints_values[i] = [-v for v in value]
-                constraints_b[i] = -constraints_b[i]
                 for j, value in enumerate(constraints_values):
                     if i == j:
-                        value += [-1.0]
+                        value += [1.0]
+                        aux_vars += 1
                     else:
                         value += [0.0]
-        for i, value in enumerate(constraints_values):
-            for j, value in enumerate(constraints_values):
-                if i == j:
-                    value += [1.0]
-                    aux_vars += 1
-                else:
-                    value += [0.0]
+            elif (constraints_ineq[i] == "<="):
+                for j, value in enumerate(constraints_values):
+                    if i == j:
+                        value += [1.0]
+                    else:
+                        value += [0.0]
 
         new_constraints = []
         for i in range(len(constraints_values)):
@@ -322,7 +319,7 @@ def showTable(stdscr, variables: list, constraints: list):
             stdscr.addstr(f'  {value}  ')
         stdscr.addstr('\n')
     stdscr.addstr('\n')
-    stdscr.addstr('[ENTER] Para a próxima etapa')
+    stdscr.addstr('Pressione qualquer tecla para continuar...')
     stdscr.addstr('\n')
     stdscr.refresh()
     stdscr.getch()
@@ -385,16 +382,27 @@ def showResult(stdscr, result: dict):
     solver_result = result['solver']
     best_result = result['bestResult']
     iterations = result['iterations']
-    for i, iteration in enumerate(iterations):
+
+    i = 0
+    while i < len(iterations):
+        iteration = iterations[i]
         stdscr.clear()
         matrix = iteration['matrix']
         base_vars = iteration['bases']
         stdscr.addstr(f'[>] {i+1}º iteração\n\n')
         header(matrix)
         body(base_vars, matrix)
-        stdscr.addstr('\n[ENTER] Para a próxima etapa\n\n')
+        if (i == len(iterations) - 1):
+            stdscr.addstr('\n[ENTER] Para ver o resultado')
+        else:
+            stdscr.addstr('\n[ENTER] Para a próxima etapa')
+        stdscr.addstr('\n[BACKSPACE] Para a etapa anterior\n\n')
         stdscr.refresh()
-        stdscr.getch()
+        key = stdscr.getch()
+        if key == 10:
+            i+=1
+        elif key == 127 and i > 0:
+            i-=1
 
     stdscr.clear()
     stdscr.addstr(f'[!] {solver_result}\n')
@@ -406,7 +414,7 @@ def showResult(stdscr, result: dict):
     for i in range(len(best_result[1])):
         stdscr.addstr(
             f"x{best_result[1][i] + 1} = {round(best_result[2][i], 4)}\n")
-    stdscr.addstr('\n[ENTER] Para finalizar')
+    stdscr.addstr('Pressione qualquer tecla para finalizar...')
     stdscr.refresh()
     stdscr.getch()
 
@@ -428,15 +436,6 @@ def main(stdscr):
 
     variables, constraints, solver_input = remove_inequation(
         variables, constraints)
-        
-    stdscr.addstr("\n")
-    stdscr.addstr("DEBUG:\n")
-    stdscr.addstr(str(variables) + "\n")
-    stdscr.addstr(str(constraints) + "\n")
-    stdscr.addstr("\n")
-    stdscr.addstr(str(solver_input) + "\n")
-    stdscr.refresh()
-    stdscr.getkey()
 
     result = json.loads(solve(solver_input, isMin=(
         solver_type == SolverType.MINIMIZAR),
