@@ -245,13 +245,18 @@ def remove_inequation(variables: list, constraints: list):
                         value += [0.0]
                         value += [0.0]
 
+
         new_constraints = []
         for i in range(len(constraints_values)):
             row = constraints_values[i] + [constraints_b[i]]
             new_constraints.append(row)
 
-        row_len = len(new_constraints[0])
-        variables += [0.0] * (row_len - num_vars)
+
+        row_len = len(new_constraints[0]) - 1
+        variables += [0.0] * (row_len - num_vars - aux_vars)
+        variables += [-1.0] * aux_vars
+        # Sempre adiciona um a mais para o campo que fica o "b"
+        variables += [0.0]
         return variables, new_constraints
 
     def minimize(variables: list, constraints: list):
@@ -423,6 +428,15 @@ def main(stdscr):
 
     variables, constraints, solver_input = remove_inequation(
         variables, constraints)
+        
+    stdscr.addstr("\n")
+    stdscr.addstr("DEBUG:\n")
+    stdscr.addstr(str(variables) + "\n")
+    stdscr.addstr(str(constraints) + "\n")
+    stdscr.addstr("\n")
+    stdscr.addstr(str(solver_input) + "\n")
+    stdscr.refresh()
+    stdscr.getkey()
 
     result = json.loads(solve(solver_input, isMin=(
         solver_type == SolverType.MINIMIZAR),

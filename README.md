@@ -23,6 +23,20 @@ O repositório está organizado da seguinte forma:
 - **`requirements.txt`**: Lista dos pacotes que são necessários para este programa funcionar.
 - **`README.md`**: Este arquivo que fornece uma visão geral do trabalho.
 
+## Instalação dos pacotes Python
+
+Para conseguir utilizar este repositório, é necessário dar o seguinte comando no terminal do computador:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+ou
+
+```bash
+py -3 -m pip install -r requirements.txt
+```
+
 ---
 
 **Observação:** Este trabalho foi desenvolvido como parte dos requisitos acadêmicos da disciplina de Otimização de Sistemas Lineares na PUCPR no ano de 2023.
