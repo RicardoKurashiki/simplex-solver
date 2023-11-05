@@ -206,6 +206,7 @@ def get_simplex_data(stdscr, num_variables, num_constraints):
 
 def remove_inequation(variables: list, constraints: list):
     def maximize(variables: list, constraints: list):
+        global aux_vars
         num_vars = len(variables)
         i = 0
         while i < len(constraints):
@@ -235,12 +236,13 @@ def remove_inequation(variables: list, constraints: list):
                     else:
                         value += [0.0]
             elif (constraints_ineq[i] == ">="):
-                constraints_values[i] = [-v for v in value]
-                constraints_b[i] = -constraints_b[i]
                 for j, value in enumerate(constraints_values):
                     if i == j:
+                        value += [-1.0]
                         value += [1.0]
+                        aux_vars += 1
                     else:
+                        value += [0.0]
                         value += [0.0]
 
         new_constraints = []
