@@ -210,8 +210,13 @@ def solve(input_matrix, nArtificials=0, isMin=False):
     # Extraindo valores da função
     func = input_matrix[0][0: (len(input_matrix[0]) - 1)]
     # Extraindo variáveis de base
-    baseVars = [i for i in range(
-        (len(input_matrix[0]) - len(input_matrix)), (len(input_matrix[0]) - 1), 1)]
+    if (nArtificials != 0 and nArtificials % 2 == 1):
+        baseVars = [i for i in range(
+            (len(input_matrix[0]) - len(input_matrix)), (len(input_matrix[0]) - 1), 1)]
+        baseVars[0] = baseVars[0] - 1
+    else:
+        baseVars = [i for i in range(
+            (len(input_matrix[0]) - len(input_matrix)), (len(input_matrix[0]) - 1), 1)]
     # Extraindo matriz
     matrix = [input_matrix[i][0: (len(input_matrix[0]) - 1)]
               for i in range(1, len(input_matrix))]
@@ -279,5 +284,16 @@ def solve(input_matrix, nArtificials=0, isMin=False):
 #                [2,3,-1,0,1,0,8],
 #                [5,2,0,-1,0,1,12]]
 
+# [[300000.0, 400000.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0], 
+#  [5.0, 4.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 200.0], 
+#  [3.0, 5.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 150.0], 
+#  [5.0, 4.0, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 100.0], 
+#  [8.0, 4.0, 0.0, 0.0, 0.0, 0.0, -1.0, 1.0, 80.0]]
 
-# solve(input_matrix, 2, True)
+# input_matrix = [[300000.0, 400000.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0], 
+#                 [5.0, 4.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 200.0], 
+#                 [3.0, 5.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 150.0], 
+#                 [5.0, 4.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0, 100.0], 
+#                 [8.0, 4.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 80.0]]
+
+# solve(input_matrix, 2, False)
