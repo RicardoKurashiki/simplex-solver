@@ -81,8 +81,7 @@ def get_simplex_size(stdscr):
 
 
 def get_inequation(stdscr):
-    # valid_inequations = [">=", "<=", "="]
-    valid_inequations = [">=", "<="]
+    valid_inequations = [">=", "<=", "="]
     current = 0
 
     while True:
@@ -209,21 +208,6 @@ def remove_inequation(variables: list, constraints: list):
     def maximize(variables: list, constraints: list):
         global aux_vars
         num_vars = len(variables)
-        i = 0
-        while i < len(constraints):
-            if (solver_type == SolverType.MAXIMIZAR):
-                ineq = "<="
-                other_ineq = ">="
-            else:
-                ineq = ">="
-                other_ineq = "<="
-            value = constraints[i]
-            if ("=" in value):
-                value[num_vars] = ineq
-                new_row = value.copy()
-                new_row[num_vars] = other_ineq
-                constraints.append(new_row)
-            i += 1
 
         constraints_values = [c[:num_vars] for c in constraints]
         constraints_ineq = [c[num_vars] for c in constraints]
@@ -240,6 +224,13 @@ def remove_inequation(variables: list, constraints: list):
                 for j, value in enumerate(constraints_values):
                     if i == j:
                         value += [-1.0]
+                    else:
+                        value += [0.0]
+            elif (constraints_ineq[i] == "="):
+                for j, value in enumerate(constraints_values):
+                    if i == j:
+                        value += [1.0]
+                        aux_vars += 1
                     else:
                         value += [0.0]
         for i, value in enumerate(constraints_values):
