@@ -1,5 +1,6 @@
 import curses
 import json
+
 from enums import *
 from solver import *
 
@@ -239,18 +240,21 @@ def remove_inequation(variables: list, constraints: list):
                 for j, value in enumerate(constraints_values):
                     if i == j:
                         value += [-1.0]
+                    else:
+                        value += [0.0]
+        for i, value in enumerate(constraints_values):
+            if (constraints_ineq[i] == ">="):
+                for j, value in enumerate(constraints_values):
+                    if i == j:
                         value += [1.0]
                         aux_vars += 1
                     else:
                         value += [0.0]
-                        value += [0.0]
-
 
         new_constraints = []
         for i in range(len(constraints_values)):
             row = constraints_values[i] + [constraints_b[i]]
             new_constraints.append(row)
-
 
         row_len = len(new_constraints[0]) - 1
         variables += [0.0] * (row_len - num_vars - aux_vars)
@@ -401,9 +405,9 @@ def showResult(stdscr, result: dict):
         stdscr.refresh()
         key = stdscr.getch()
         if key == 10:
-            i+=1
+            i += 1
         elif key == 127 and i > 0:
-            i-=1
+            i -= 1
 
     stdscr.clear()
     stdscr.addstr(f'[!] {solver_result}\n')
@@ -437,6 +441,11 @@ def main(stdscr):
 
     variables, constraints, solver_input = remove_inequation(
         variables, constraints)
+
+    stdscr.addstr('\nDEBUG\n')
+    stdscr.addstr(str(solver_input))
+    stdscr.refresh()
+    stdscr.getch()
 
     result = json.loads(solve(solver_input, isMin=(
         solver_type == SolverType.MINIMIZAR),
