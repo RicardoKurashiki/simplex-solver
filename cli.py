@@ -214,18 +214,21 @@ def remove_inequation(variables: list, constraints: list):
         constraints_b = [c[-1] for c in constraints]
 
         for i, value in enumerate(constraints_values):
+            # Quando for "<=", adiciona uma variável de folga
             if (constraints_ineq[i] == "<="):
                 for j, value in enumerate(constraints_values):
                     if i == j:
                         value += [1.0]
                     else:
                         value += [0.0]
+            # Quando for ">=", adiciona uma variável de folga + uma variável artificial
             elif (constraints_ineq[i] == ">="):
                 for j, value in enumerate(constraints_values):
                     if i == j:
                         value += [-1.0]
                     else:
                         value += [0.0]
+            # Quando for "=", adiciona uma variável artificial
             elif (constraints_ineq[i] == "="):
                 for j, value in enumerate(constraints_values):
                     if i == j:
@@ -234,6 +237,7 @@ def remove_inequation(variables: list, constraints: list):
                     else:
                         value += [0.0]
         for i, value in enumerate(constraints_values):
+            # Quando for ">=", adiciona uma variável de folga + uma variável artificial
             if (constraints_ineq[i] == ">="):
                 for j, value in enumerate(constraints_values):
                     if i == j:
@@ -263,16 +267,26 @@ def remove_inequation(variables: list, constraints: list):
         constraints_b = [c[-1] for c in constraints]
 
         for i, value in enumerate(constraints_values):
+            # Quando for ">=", adiciona uma variável de folga + uma variável artificial
             if (constraints_ineq[i] == ">="):
                 for j, value in enumerate(constraints_values):
                     if i == j:
                         value += [-1.0]
                     else:
                         value += [0.0]
+            # Quando for "<=", adiciona uma variável de folga
             elif (constraints_ineq[i] == "<="):
                 for j, value in enumerate(constraints_values):
                     if i == j:
                         value += [1.0]
+                    else:
+                        value += [0.0]
+            # Quando for "<=", adiciona uma variável artificial
+            elif (constraints_ineq[i] == "="):
+                for j, value in enumerate(constraints_values):
+                    if i == j:
+                        value += [1.0]
+                        aux_vars += 1
                     else:
                         value += [0.0]
         for i, value in enumerate(constraints_values):
@@ -289,10 +303,11 @@ def remove_inequation(variables: list, constraints: list):
             row = constraints_values[i] + [constraints_b[i]]
             new_constraints.append(row)
 
-        num_constraints = len(constraints)
         variables = [-v for v in variables]
-        variables += [0.0] * num_constraints
+        row_len = len(new_constraints[0]) - 1
+        variables += [0.0] * (row_len - num_vars - aux_vars)
         variables += [-1.0] * aux_vars
+        # Sempre adiciona um a mais para o campo que fica o "b"
         variables += [0.0]
         return variables, new_constraints
 
