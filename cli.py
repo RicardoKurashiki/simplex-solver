@@ -450,11 +450,6 @@ def main(stdscr):
     variables, constraints, solver_input = remove_inequation(
         variables, constraints)
 
-    stdscr.addstr('\nDEBUG\n')
-    stdscr.addstr(str(solver_input))
-    stdscr.refresh()
-    stdscr.getch()
-
     result = json.loads(solve(solver_input, isMin=(
         solver_type == SolverType.MINIMIZAR),
         nArtificials=aux_vars))
