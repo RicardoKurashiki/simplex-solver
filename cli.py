@@ -278,16 +278,18 @@ def remove_inequation(variables: list, constraints: list):
                         value += [-1.0]
                     else:
                         value += [0.0]
-                for j, value in enumerate(constraints_values):
-                    if i == j:
-                        value += [1.0]
-                        aux_vars += 1
-                    else:
-                        value += [0.0]
             elif (constraints_ineq[i] == "<="):
                 for j, value in enumerate(constraints_values):
                     if i == j:
                         value += [1.0]
+                    else:
+                        value += [0.0]
+        for i, value in enumerate(constraints_values):
+            if (constraints_ineq[i] == ">="):
+                for j, value in enumerate(constraints_values):
+                    if i == j:
+                        value += [1.0]
+                        aux_vars += 1
                     else:
                         value += [0.0]
 
