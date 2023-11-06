@@ -331,7 +331,7 @@ def showTable(stdscr, variables: list, constraints: list):
             stdscr.addstr(f'  {value}  ')
         stdscr.addstr('\n')
     stdscr.addstr('\n')
-    stdscr.addstr('Pressione qualquer tecla para continuar...')
+    stdscr.addstr('[>] Pressione qualquer tecla para continuar...')
     stdscr.addstr('\n')
     stdscr.refresh()
     stdscr.getch()
@@ -379,7 +379,7 @@ def showResult(stdscr, result: dict):
                 print_str += divider
                 print_str += f"Cj      {'|' : >1} "
             elif i == row_len - 1:
-                print_str += f"Cj - Zj {'|' : >1} "
+                print_str += f"Zj      {'|' : >1} "
             for j in range(column_len):
                 if j < column_len - 1:
                     print_str += f"{row_values[j]}"
@@ -427,7 +427,7 @@ def showResult(stdscr, result: dict):
     for i in range(len(best_result[1])):
         stdscr.addstr(
             f"x{best_result[1][i] + 1} = {round(best_result[2][i], 4)}\n")
-    stdscr.addstr('Pressione qualquer tecla para finalizar...')
+    stdscr.addstr('\n[>] Pressione qualquer tecla para finalizar...\n')
     stdscr.refresh()
     stdscr.getch()
 
