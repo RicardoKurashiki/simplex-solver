@@ -30,6 +30,7 @@ def get_simplex_type(stdscr):
 
     while True:
         stdscr.clear()
+        init(stdscr)
         stdscr.addstr("[>] Selecione o tipo de resolução:\n")
         for i, type in enumerate(types):
             if i == current:
@@ -377,9 +378,9 @@ def showResult(stdscr, result: dict):
                     print_str += f"x{base_vars[i] + 1}      {'|' : >1} "
             elif i == row_len - 2:
                 print_str += divider
-                print_str += f"Cj      {'|' : >1} "
-            elif i == row_len - 1:
                 print_str += f"Zj      {'|' : >1} "
+            elif i == row_len - 1:
+                print_str += f"Cj - Zj {'|' : >1} "
             for j in range(column_len):
                 if j < column_len - 1:
                     print_str += f"{row_values[j]}"
